@@ -10,6 +10,13 @@ enum class OrderSide {
     SELL
 };
 
+enum class OrderStatus {
+    NEW,
+    PARTIALLY_FILLED,
+    FULLY_FILLED,
+    CANCELLED
+};
+
 // for client submission
 struct Order{
     OrderSide side;
@@ -32,6 +39,7 @@ struct ExchangeOrder{
     OrderSide _side;
     double _price;
     uint64_t _quantity;
+    OrderStatus _status;
     TimePoint _time_submitted;
     TimePoint _updated_time;
 
@@ -39,7 +47,8 @@ struct ExchangeOrder{
         _side(order.side),
         _price(order.price),
         _quantity(order.quantity),
-        _id(id)
+        _id(id),
+        _status(OrderStatus::NEW)
     {
         TimePoint now = std::chrono::system_clock::now();
         _time_submitted = now;
@@ -48,6 +57,10 @@ struct ExchangeOrder{
 
     void set_updated_time(TimePoint t) {
         _updated_time = t;
+    }
+
+    void set_order_status(const OrderStatus new_status) {
+        _status = new_status;
     }
 };
 
