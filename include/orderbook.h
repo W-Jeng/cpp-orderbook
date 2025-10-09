@@ -32,7 +32,7 @@ public:
                 break;
         }
         
-        return eorder._id;
+        return eorder -> _id;
     }
     
     void modify_order(OrderId order_id, Price price, Quantity quantity) {
@@ -43,11 +43,11 @@ public:
     
     template <typename MapType>
     void add_order_dispatcher(MapType& book, OrderPtr order) {
-        auto [it, inserted] = book.try_emplace(order._price, order._price);
+        auto [it, inserted] = book.try_emplace(order -> _price, order -> _price);
         PriceLevel& p_level = it -> second;
         // remove below
-        p_level.add_order(order);
-        _order_id_to_level[order._id] = std::move(order);
+        // p_level.add_order(order);
+        _order_id_to_order[order -> _id] = std::move(order);
     }
     
     void try_match() {
