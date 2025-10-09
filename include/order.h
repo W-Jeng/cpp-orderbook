@@ -19,14 +19,16 @@ enum class OrderStatus {
 
 // for client submission
 struct Order{
-    OrderSide side;
-    double price;
-    uint64_t quantity;
+    std::string _instrument;
+    OrderSide _side;
+    double _price;
+    uint64_t _quantity;
 
-    Order(OrderSide side, double p, uint64_t qty):
-        side(side),
-        price(p),
-        quantity(qty)
+    Order(std::string instrument, OrderSide side, double price, uint64_t quantity):
+        _instrument(instrument),
+        _side(side),
+        _price(price),
+        _quantity(quantity)
     {}
 };
 
@@ -45,10 +47,10 @@ struct ExchangeOrder{
     TimePoint _updated_time;
 
     ExchangeOrder(const Order& order, uint64_t id): 
-        _side(order.side),
-        _price(order.price),
-        _quantity(order.quantity),
-        _quantity_filled(order.quantity),
+        _side(order._side),
+        _price(order._price),
+        _quantity(order._quantity),
+        _quantity_filled(order._quantity),
         _id(id),
         _status(OrderStatus::NEW)
     {

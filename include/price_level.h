@@ -65,9 +65,18 @@ public:
 
         return true;
     }
-
+    
+    size_t size() {
+        return _orders_list.size();   
+    }
+    
+    bool empty() {
+        return _orders_list.empty();   
+    }
+    
 private:
     const double _price;
     OrderList _orders_list;
     std::unordered_map<uint64_t, OrderList::iterator> _orders_map;
+
 };
