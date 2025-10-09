@@ -39,6 +39,7 @@ struct ExchangeOrder{
     OrderSide _side;
     double _price;
     uint64_t _quantity;
+    uint64_t _quantity_filled;
     OrderStatus _status;
     TimePoint _time_submitted;
     TimePoint _updated_time;
@@ -47,6 +48,7 @@ struct ExchangeOrder{
         _side(order.side),
         _price(order.price),
         _quantity(order.quantity),
+        _quantity_filled(order.quantity),
         _id(id),
         _status(OrderStatus::NEW)
     {
@@ -61,6 +63,39 @@ struct ExchangeOrder{
 
     void set_order_status(const OrderStatus new_status) {
         _status = new_status;
+    }
+    
+    void add_fill_quantity(uint64_t fill_qty) {
+        if (_quantity_filled + fill_qty > _quantity) {
+            throw std::runtime_error("Unable to carry add fill quantity due to it exceeds the order quantity amount");
+        }
+        
+        _quantity_filled += fill_qty;
+        
+        if (_quantity_filled == _quantity) {
+            _status = OrderStatus::FULLY_FILLED;  
+            return;
+        }
+        
+        _status = OrderStatus::PARTIALLY_FILLED;
+    }
+    
+    bool modify_price(double new_price) {
+        if (new_price <= 0.0) {
+            return false;
+        }
+        
+        _price = new_price;
+        return true;
+    }
+    
+    bool modify_quantity(uint64_t new_quantity) {
+        if (new_quantity <= _quantity) {
+            return false;
+        }
+        
+        _quantity = new_quantity;
+        return true;
     }
 };
 
