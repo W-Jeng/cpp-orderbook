@@ -6,8 +6,9 @@
 #include <price_level.h>
 #include <order.h>
 #include <thread_id_allocator.h>
+#include <new>
 
-class OrderBook {
+class alignas(std::hardware_destructive_interference_size) OrderBook {
 public:
     explicit OrderBook(const Instrument& instrument, ThreadIDAllocator& thread_id_allocator): 
         _instrument(instrument),
@@ -34,8 +35,10 @@ public:
         return eorder._id;
     }
     
-    void modify_order(OrderId order_id, Price price) {
-        // auto it = _order_id_to_level.find(order -> _id);
+    void modify_order(OrderId order_id, Price price, Quantity quantity) {
+        bool price_changed = false;
+        bool quantity_changed = false;
+
     }
     
     template <typename MapType>
@@ -43,7 +46,7 @@ public:
         auto [it, inserted] = book.try_emplace(order._price, order._price);
         PriceLevel& p_level = it -> second;
         p_level.add_order(order);
-        _order_id_to_level[order._id] = &p_level;
+        _order_id_to_level[order._id] = &order;
     }
     
     void try_match() {
@@ -62,7 +65,7 @@ private:
     const Instrument _instrument;
     std::map<Price, PriceLevel, std::greater<double>> _bids;
     std::map<Price, PriceLevel, std::less<double>> _asks;
-    std::unordered_map<OrderId, PriceLevel*> _order_id_to_level;
+    std::unordered_map<OrderId, ExchangeOrder*> _order_id_to_order;
     ThreadIDAllocator& _thread_id_allocator;
     OrderIdBlock _order_id_block;
     uint64_t _next_available_order_id;
