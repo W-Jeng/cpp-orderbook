@@ -13,7 +13,7 @@ public:
     using OrderPtr = std::unique_ptr<ExchangeOrder>;
     using OrderList = std::list<OrderPtr>;
 
-    PriceLevel(int price):
+    PriceLevel(double price):
         _price(price)
     {}
 
@@ -78,5 +78,4 @@ private:
     const double _price;
     OrderList _orders_list;
     std::unordered_map<uint64_t, OrderList::iterator> _orders_map;
-
 };

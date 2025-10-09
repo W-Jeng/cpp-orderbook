@@ -17,8 +17,8 @@ public:
         _active_order_id = _order_id_block._start;
     }
 
-    void add_order(const Order& order, uint64_t assigned_order_id) {
-        ExchangeOrder eorder(order, assigned_order_id);
+    void add_order(const Order& order) {
+        ExchangeOrder eorder(order, get_order_id());
 
         switch (order._side) {
             case OrderSide::BUY:
@@ -33,7 +33,10 @@ public:
     
     template <typename MapType>
     void add_order_dispatcher(MapType& book, ExchangeOrder& order) {
-        
+        auto [it, inserted] = book.try_emplace(order._price, order._price);
+        PriceLevel& p_level = it -> second;
+        p_level.add_order(order);
+        _order_price_map[order._id] = &p_level;
     }
     
     void try_match() {
