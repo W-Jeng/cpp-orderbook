@@ -50,7 +50,7 @@ struct ExchangeOrder{
         _side(order._side),
         _price(order._price),
         _quantity(order._quantity),
-        _quantity_filled(order._quantity),
+        _quantity_filled(0),
         _id(id),
         _status(OrderStatus::NEW)
     {
@@ -110,7 +110,7 @@ std::ostream& operator<<(std::ostream& os, const ExchangeOrder& eorder) {
 }
 
 std::ostream& operator<<(std::ostream& os, const Order& order) {
-    const char* side_str = (order.side == OrderSide::BUY ? "BUY" : "SELL");
+    const char* side_str = (order._side == OrderSide::BUY ? "BUY" : "SELL");
     return os << "Order(side=" << side_str <<
-        ", price=" << order.price << ", quantity=" << order.quantity << ")";
+        ", price=" << order._price << ", quantity=" << order._quantity << ")";
 }
