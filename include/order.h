@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <chrono>
+#include <memory>
 
 enum class OrderSide {
     BUY,
@@ -105,6 +106,8 @@ struct ExchangeOrder{
         return true;
     }
 };
+
+using OrderPtr = std::unique_ptr<ExchangeOrder>;
 
 inline std::ostream& operator<<(std::ostream& os, const ExchangeOrder& eorder) {
     const char* side_str = (eorder._side == OrderSide::BUY ? "BUY" : "SELL");

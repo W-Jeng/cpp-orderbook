@@ -20,15 +20,15 @@ public:
     
     // returns order id
     uint64_t add_order(const Order& order) {
-        ExchangeOrder eorder(order, get_order_id());
+        OrderPtr eorder = std::make_unique<ExchangeOrder>(order, get_order_id());
 
         switch (order._side) {
             case OrderSide::BUY:
-                add_order_dispatcher(_bids, eorder);           
+                add_order_dispatcher(_bids, std::move(eorder));           
                 break;
                 
             case OrderSide::SELL:
-                add_order_dispatcher(_asks, eorder);
+                add_order_dispatcher(_asks, std::move(eorder));
                 break;
         }
         
@@ -42,11 +42,12 @@ public:
     }
     
     template <typename MapType>
-    void add_order_dispatcher(MapType& book, ExchangeOrder& order) {
+    void add_order_dispatcher(MapType& book, OrderPtr order) {
         auto [it, inserted] = book.try_emplace(order._price, order._price);
         PriceLevel& p_level = it -> second;
+        // remove below
         p_level.add_order(order);
-        _order_id_to_level[order._id] = &order;
+        _order_id_to_level[order._id] = std::move(order);
     }
     
     void try_match() {
@@ -65,7 +66,7 @@ private:
     const Instrument _instrument;
     std::map<Price, PriceLevel, std::greater<double>> _bids;
     std::map<Price, PriceLevel, std::less<double>> _asks;
-    std::unordered_map<OrderId, ExchangeOrder*> _order_id_to_order;
+    std::unordered_map<OrderId, OrderPtr> _order_id_to_order;
     ThreadIDAllocator& _thread_id_allocator;
     OrderIdBlock _order_id_block;
     uint64_t _next_available_order_id;
