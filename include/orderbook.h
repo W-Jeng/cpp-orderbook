@@ -54,7 +54,7 @@ public:
         
     }
     
-    uint64_t get_order_id() {
+    OrderId get_order_id() {
         if (_next_available_order_id == _order_id_block._end) {
             _order_id_block = _thread_id_allocator.get_next_id_block();
             _next_available_order_id = _order_id_block._start;
@@ -69,5 +69,5 @@ private:
     std::unordered_map<OrderId, OrderPtr> _order_id_to_order;
     ThreadIDAllocator& _thread_id_allocator;
     OrderIdBlock _order_id_block;
-    uint64_t _next_available_order_id;
+    OrderId _next_available_order_id;
 };
