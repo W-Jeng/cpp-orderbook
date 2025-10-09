@@ -17,14 +17,19 @@ enum class OrderStatus {
     CANCELLED
 };
 
+using Instrument = std::string;
+using OrderId = uint64_t;
+using Price = double;
+using Quantity = uint64_t;
+
 // for client submission
 struct Order{
-    std::string _instrument;
+    Instrument _instrument;
     OrderSide _side;
-    double _price;
-    uint64_t _quantity;
+    Price _price;
+    Quantity _quantity;
 
-    Order(std::string instrument, OrderSide side, double price, uint64_t quantity):
+    Order(Instrument instrument, OrderSide side, Price price, Quantity quantity):
         _instrument(instrument),
         _side(side),
         _price(price),
@@ -37,16 +42,16 @@ struct ExchangeOrder{
     using Clock = std::chrono::system_clock;
     using TimePoint = std::chrono::time_point<Clock>;
 
-    uint64_t _id;
+    OrderId _id;
     OrderSide _side;
-    double _price;
-    uint64_t _quantity;
-    uint64_t _quantity_filled;
+    Price _price;
+    Quantity _quantity;
+    Quantity _quantity_filled;
     OrderStatus _status;
     TimePoint _time_submitted;
     TimePoint _updated_time;
 
-    ExchangeOrder(const Order& order, uint64_t id): 
+    ExchangeOrder(const Order& order, OrderId id): 
         _side(order._side),
         _price(order._price),
         _quantity(order._quantity),
@@ -67,7 +72,7 @@ struct ExchangeOrder{
         _status = new_status;
     }
     
-    void add_fill_quantity(uint64_t fill_qty) {
+    void add_fill_quantity(Quantity fill_qty) {
         if (_quantity_filled + fill_qty > _quantity) {
             throw std::runtime_error("Unable to carry add fill quantity due to it exceeds the order quantity amount");
         }
@@ -82,7 +87,7 @@ struct ExchangeOrder{
         _status = OrderStatus::PARTIALLY_FILLED;
     }
     
-    bool modify_price(double new_price) {
+    bool modify_price(Price new_price) {
         if (new_price <= 0.0) {
             return false;
         }
@@ -91,7 +96,7 @@ struct ExchangeOrder{
         return true;
     }
     
-    bool modify_quantity(uint64_t new_quantity) {
+    bool modify_quantity(Quantity new_quantity) {
         if (new_quantity <= _quantity) {
             return false;
         }
@@ -101,7 +106,7 @@ struct ExchangeOrder{
     }
 };
 
-std::ostream& operator<<(std::ostream& os, const ExchangeOrder& eorder) {
+inline std::ostream& operator<<(std::ostream& os, const ExchangeOrder& eorder) {
     const char* side_str = (eorder._side == OrderSide::BUY ? "BUY" : "SELL");
     std::time_t updated_time_t = std::chrono::system_clock::to_time_t(eorder._updated_time);
     return os << "ExchangeOrder(id=" << eorder._id << ", side=" << side_str <<
@@ -109,7 +114,7 @@ std::ostream& operator<<(std::ostream& os, const ExchangeOrder& eorder) {
         ", updated_time=" << updated_time_t << ")";
 }
 
-std::ostream& operator<<(std::ostream& os, const Order& order) {
+inline std::ostream& operator<<(std::ostream& os, const Order& order) {
     const char* side_str = (order._side == OrderSide::BUY ? "BUY" : "SELL");
     return os << "Order(side=" << side_str <<
         ", price=" << order._price << ", quantity=" << order._quantity << ")";

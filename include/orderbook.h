@@ -9,15 +9,16 @@
 
 class OrderBook {
 public:
-    explicit OrderBook(const std::string& instrument, ThreadIDAllocator& thread_id_allocator): 
+    explicit OrderBook(const Instrument& instrument, ThreadIDAllocator& thread_id_allocator): 
         _instrument(instrument),
         _thread_id_allocator(thread_id_allocator),
         _order_id_block(thread_id_allocator.get_next_id_block())
     {
-        _active_order_id = _order_id_block._start;
+        _next_available_order_id = _order_id_block._start;
     }
-
-    void add_order(const Order& order) {
+    
+    // returns order id
+    uint64_t add_order(const Order& order) {
         ExchangeOrder eorder(order, get_order_id());
 
         switch (order._side) {
@@ -29,6 +30,12 @@ public:
                 add_order_dispatcher(_asks, eorder);
                 break;
         }
+        
+        return eorder._id;
+    }
+    
+    void modify_order(OrderId order_id, Price price) {
+        // auto it = _order_id_to_level.find(order -> _id);
     }
     
     template <typename MapType>
@@ -36,7 +43,7 @@ public:
         auto [it, inserted] = book.try_emplace(order._price, order._price);
         PriceLevel& p_level = it -> second;
         p_level.add_order(order);
-        _order_price_map[order._id] = &p_level;
+        _order_id_to_level[order._id] = &p_level;
     }
     
     void try_match() {
@@ -44,19 +51,19 @@ public:
     }
     
     uint64_t get_order_id() {
-        if (_active_order_id == _order_id_block._end) {
+        if (_next_available_order_id == _order_id_block._end) {
             _order_id_block = _thread_id_allocator.get_next_id_block();
-            _active_order_id = _order_id_block._start;
+            _next_available_order_id = _order_id_block._start;
         }
-        return _active_order_id++;
+        return _next_available_order_id++;
     }
 
 private:
-    const std::string _instrument;
-    std::map<double, PriceLevel, std::greater<double>> _bids;
-    std::map<double, PriceLevel, std::less<double>> _asks;
-    std::unordered_map<uint64_t, PriceLevel*> _order_price_map;
+    const Instrument _instrument;
+    std::map<Price, PriceLevel, std::greater<double>> _bids;
+    std::map<Price, PriceLevel, std::less<double>> _asks;
+    std::unordered_map<OrderId, PriceLevel*> _order_id_to_level;
     ThreadIDAllocator& _thread_id_allocator;
     OrderIdBlock _order_id_block;
-    uint64_t _active_order_id;
+    uint64_t _next_available_order_id;
 };

@@ -13,18 +13,18 @@ public:
     using OrderPtr = std::unique_ptr<ExchangeOrder>;
     using OrderList = std::list<OrderPtr>;
 
-    PriceLevel(double price):
+    PriceLevel(Price price):
         _price(price)
     {}
 
     void add_order(OrderPtr eorder_ptr) {
-        const uint64_t order_id = eorder_ptr -> _id;
+        const OrderId order_id = eorder_ptr -> _id;
         _orders_list.push_back(std::move(eorder_ptr));
         auto it = --_orders_list.end();
         _orders_map[order_id] = it;
     }
 
-    bool remove_order(uint64_t order_id) {
+    bool remove_order(OrderId order_id) {
         auto it_map = _orders_map.find(order_id);
 
         if (it_map == _orders_map.end()) {
@@ -48,8 +48,8 @@ public:
         
         auto it_list = it_map -> second;
         auto& target_order_ptr = *it_list;
-        const uint64_t new_qty = eorder_ptr -> _quantity;
-        const uint64_t filled_qty  = target_order_ptr -> _quantity_filled;
+        const Quantity new_qty = eorder_ptr -> _quantity;
+        const Quantity filled_qty  = target_order_ptr -> _quantity_filled;
         
         if (new_qty > target_order_ptr -> _quantity) {
             // lose queue priority
@@ -75,7 +75,7 @@ public:
     }
     
 private:
-    const double _price;
+    const Price _price;
     OrderList _orders_list;
-    std::unordered_map<uint64_t, OrderList::iterator> _orders_map;
+    std::unordered_map<OrderId, OrderList::iterator> _orders_map;
 };
