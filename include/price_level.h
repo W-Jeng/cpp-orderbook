@@ -10,16 +10,15 @@
 
 class PriceLevel {
 public:
-    using OrderPtr = std::unique_ptr<ExchangeOrder>;
-    using OrderList = std::list<OrderPtr>;
+    using OrderList = std::list<ExchangeOrder*>;
 
     PriceLevel(Price price):
         _price(price)
     {}
 
-    void add_order(OrderPtr eorder_ptr) {
-        const OrderId order_id = eorder_ptr -> _id;
-        _orders_list.push_back(std::move(eorder_ptr));
+    void add_order(ExchangeOrder* order) {
+        const OrderId order_id = order -> _id;
+        _orders_list.push_back(order);
         auto it = --_orders_list.end();
         _orders_map[order_id] = it;
     }
@@ -27,9 +26,8 @@ public:
     bool remove_order(OrderId order_id) {
         auto it_map = _orders_map.find(order_id);
 
-        if (it_map == _orders_map.end()) {
+        if (it_map == _orders_map.end())
             return false;
-        }
 
         auto it_list = it_map->second;
         _orders_list.erase(it_list);
@@ -37,41 +35,22 @@ public:
         return true;
     }
 
-    bool modify_qty(OrderPtr eorder_ptr) {
-        // if quantity increase, then lose queue priority
-        // if quantity decrease, then just modify internal pointer info
-        auto it_map = _orders_map.find(eorder_ptr -> _id);
-
-        if (it_map == _orders_map.end()) {
-            return false;
-        }
-        
-        auto it_list = it_map -> second;
-        auto& target_order_ptr = *it_list;
-        const Quantity new_qty = eorder_ptr -> _quantity;
-        const Quantity filled_qty  = target_order_ptr -> _quantity_filled;
-        
-        if (new_qty > target_order_ptr -> _quantity) {
-            // lose queue priority
-            OrderPtr temp = std::move(target_order_ptr);
-            _orders_list.erase(it_list);
-            _orders_map.erase(it_map);
-            temp -> modify_quantity(new_qty);
-            add_order(std::move(temp));
-        } else {
-            // just change internal quantity information
-            target_order_ptr -> modify_quantity(new_qty);
-        }
-
-        return true;
-    }
-    
-    size_t size() {
+    size_t size() const noexcept {
         return _orders_list.size();   
     }
     
-    bool empty() {
+    bool empty() const noexcept {
         return _orders_list.empty();   
+    }
+    
+    Quantity total_qty() const {
+        Quantity qty = 0;
+        
+        for (auto order: _orders_list) {
+            qty += (order -> _quantity - order -> _quantity_filled);
+        }
+        
+        return qty;
     }
     
 private:

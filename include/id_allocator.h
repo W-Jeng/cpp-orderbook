@@ -15,15 +15,15 @@ struct OrderIdBlock{
 
 // we try with single threaded first
 // the idea is to allocate the thread id in blocks so we can reduce the fetch add for multithreaded (less contention)
-class ThreadIDAllocator {
+class IdAllocator {
 public:
     static constexpr OrderId DEFAULT_BLOCK_SIZE = 1'000'000;
 
-    ThreadIDAllocator():
+    IdAllocator():
         _block_size(DEFAULT_BLOCK_SIZE)
     {}
 
-    ThreadIDAllocator(const OrderId block_size):
+    IdAllocator(const OrderId block_size):
         _block_size(block_size)
     {}
 
