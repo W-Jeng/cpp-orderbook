@@ -73,7 +73,7 @@ struct ExchangeOrder{
         _status = new_status;
     }
     
-    void add_fill_quantity(Quantity fill_qty) {
+    void match(Quantity fill_qty) {
         if (_quantity_filled + fill_qty > _quantity) {
             throw std::runtime_error("Unable to carry add fill quantity due to it exceeds the order quantity amount");
         }
@@ -88,22 +88,20 @@ struct ExchangeOrder{
         _status = OrderStatus::PARTIALLY_FILLED;
     }
     
-    bool modify_price(Price new_price) {
-        if (new_price <= 0.0) {
-            return false;
+    bool cancel() {
+        if (_status == OrderStatus::FULLY_FILLED || _status == OrderStatus::CANCELLED) {
+            return false;   
         }
         
-        _price = new_price;
-        return true;
+        _status = OrderStatus::CANCELLED;
     }
     
-    bool modify_quantity(Quantity new_quantity) {
-        if (new_quantity <= _quantity) {
-            return false;
-        }
-        
+    void set_price(Price new_price) {
+        _price = new_price;
+    }
+    
+    void set_quantity(Quantity new_quantity) {
         _quantity = new_quantity;
-        return true;
     }
 };
 

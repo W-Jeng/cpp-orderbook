@@ -34,6 +34,12 @@ public:
         _orders_map.erase(it_map);
         return true;
     }
+    
+    bool remove_order_on_it(OrderList::iterator order_it) {
+        OrderId order_id = (*order_it) -> _id;
+        _orders_list.erase(order_it);
+        _orders_map.erase(order_id);
+    }
 
     size_t size() const noexcept {
         return _orders_list.size();   
@@ -51,6 +57,22 @@ public:
         }
         
         return qty;
+    }
+    
+    ExchangeOrder* front() {
+        return *(_orders_list.begin());
+    }
+    
+    void pop_front_order_if_filled() {
+        if (empty()) {
+            return;   
+        }
+        
+        ExchangeOrder* order = front();
+
+        if (order -> _status == OrderStatus::FULLY_FILLED) {
+            _orders_list.pop_front();
+        }
     }
     
 private:
