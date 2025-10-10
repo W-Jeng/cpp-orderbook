@@ -7,6 +7,7 @@
 #include <order.h>
 #include <id_allocator.h>
 #include <new>
+#include <iostream>
 
 constexpr std::size_t CACHE_LINE_SIZE = std::hardware_destructive_interference_size;
 
@@ -23,6 +24,7 @@ public:
     // returns order id
     OrderId add_order(const Order& order) {
         OrderPtr eorder = std::make_unique<ExchangeOrder>(order, get_order_id());
+        OrderId order_id = eorder -> _id;
 
         switch (order._side) {
             case OrderSide::BUY:
@@ -34,7 +36,7 @@ public:
                 break;
         }
         
-        return eorder -> _id;
+        return order_id;
     }
     
     template <typename MapType>
@@ -68,13 +70,14 @@ public:
                     cancel_order_dispatcher(_asks, order);           
                     break;
             }
-        } catch (const std::exception& e) {
-            std::cout << "Unknown exception caught in cancel order dispatcher: " << e.what() << std::endl;   
         } catch (const std::runtime_error& e) {
             std::cout << "Unknown runtime error caught in cancel order dispatcher: " << e.what() << std::endl;   
+        } catch (const std::exception& e) {
+            std::cout << "Unknown exception caught in cancel order dispatcher: " << e.what() << std::endl;   
         } catch (...) {
             std::cerr << "Unknown exception caught in cancel order dispatcher!" << std::endl;   
         }
+        return true;
     }
     
     template<typename MapType>
@@ -115,10 +118,10 @@ public:
                 case OrderSide::SELL:
                     return modify_order_dispatcher(_asks, order, price, quantity);           
             }
-        } catch (const std::exception& e) {
-            std::cout << "Unknown exception caught in modify order dispatcher: " << e.what() << std::endl;   
         } catch (const std::runtime_error& e) {
             std::cout << "Unknown runtime error caught in modify order dispatcher: " << e.what() << std::endl;   
+        } catch (const std::exception& e) {
+            std::cout << "Unknown exception caught in modify order dispatcher: " << e.what() << std::endl;   
         } catch (...) {
             std::cerr << "Unknown exception caught in modify order dispatcher!" << std::endl;   
         }
@@ -137,7 +140,7 @@ public:
         
         if (price_changed) {
             old_price_level.remove_order(order -> _id);   
-            order -> set_price(new_price)
+            order -> set_price(new_price);
             auto [it, inserted] = side_levels.try_emplace(new_price, new_price);
             PriceLevel& new_price_level = it -> second;
             new_price_level.add_order(order);
@@ -145,7 +148,7 @@ public:
         
         if (quantity_changed) {
             bool quantity_increased = (new_qty > order -> _quantity);
-            order -> set_quantity(new_qty)
+            order -> set_quantity(new_qty);
             
             if (quantity_increased && !price_changed) {
                 old_price_level.remove_order(order -> _id);

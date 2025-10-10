@@ -94,6 +94,7 @@ struct ExchangeOrder{
         }
         
         _status = OrderStatus::CANCELLED;
+        return true;
     }
     
     void set_price(Price new_price) {

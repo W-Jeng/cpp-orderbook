@@ -35,7 +35,7 @@ public:
         return true;
     }
     
-    bool remove_order_on_it(OrderList::iterator order_it) {
+    void remove_order_on_it(OrderList::iterator order_it) {
         OrderId order_id = (*order_it) -> _id;
         _orders_list.erase(order_it);
         _orders_map.erase(order_id);
