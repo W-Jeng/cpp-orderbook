@@ -3,11 +3,14 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <new>
+#include <vector>
+#include <iostream>
 #include <price_level.h>
 #include <order.h>
 #include <id_allocator.h>
-#include <new>
-#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 constexpr std::size_t CACHE_LINE_SIZE = std::hardware_destructive_interference_size;
 
@@ -235,6 +238,14 @@ public:
         return _asks.begin() -> first;
     }
 
+    const std::map<Price, PriceLevel, std::greater<double>>& get_bids() const {
+        return _bids;
+    }
+
+    const std::map<Price, PriceLevel, std::less<double>>& get_asks() const {
+        return _asks;
+    }
+
 private:
     const Instrument _instrument;
     std::map<Price, PriceLevel, std::greater<double>> _bids;
@@ -244,3 +255,136 @@ private:
     OrderIdBlock _order_id_block;
     OrderId _next_available_order_id;
 };
+
+struct OrderBookTableRow {
+    std::string bid_orders;
+    std::string bid_qty;
+    std::string bid_price;
+    std::string ask_price;
+    std::string ask_qty;
+    std::string ask_orders;
+};
+
+inline std::string price_to_string(double p, int precision = 2) {
+    std::ostringstream oss;
+    oss.setf(std::ios::fixed);
+    oss.precision(precision);
+    oss << p;
+    return oss.str();
+}
+
+std::unordered_map<std::string, std::string> get_default_header(const std::vector<std::string>& headers) {
+    std::unordered_map<std::string, std::string> mp;
+
+    for (const std::string& h: headers) {
+        mp[h] = h;
+    }
+
+    return mp;
+}
+
+const std::string row_to_string(
+    const std::vector<std::string>& header, 
+    const std::unordered_map<std::string, std::string>& row,
+    const std::unordered_map<std::string, int>& col_max_size
+) {
+    std::string printable = "|";
+
+    for (const auto& h: header) {
+        if (h == "Ask Price")
+            printable += "|";
+        
+        int total_space = col_max_size.at(h);
+        int num_empty_spaces = total_space - row.at(h).size();
+        int left_empty_space = num_empty_spaces/2 + 1;
+        int right_empty_space = num_empty_spaces - left_empty_space + 2;
+        printable += std::string(left_empty_space, ' ') + row.at(h) + std::string(right_empty_space, ' ') + "|";
+    }
+
+    return printable;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const OrderBook& orderbook) {
+    // We will go for the format of 
+    // Bid Orders | Bid Qty | Bid Price || Ask Price | Ask Qty | Ask Orders
+    // --------------------------------------------------------------------
+    //      2     |  1000   |    1.0    ||    1.01   |  500    |    5
+    //      1     |   500   |    0.98   ||    1.05   |  300    |    2
+    // ---------------------------------------------------------------------
+    std::vector<std::string> headers = {
+        "Bid Orders", "Bid Qty", "Bid Price", "Ask Price", "Ask Qty", "Ask Orders"
+    };
+    std::unordered_map<std::string, int> column_max_size;
+    int total_col_size = 0;
+
+    // default size
+    for (const auto& header: headers) {
+        column_max_size[header] = header.size();
+        total_col_size += header.size();
+    }
+
+    std::vector<std::unordered_map<std::string, std::string>> orderbook_table_rows;
+    orderbook_table_rows.push_back(get_default_header(headers));
+
+    const std::map<Price, PriceLevel, std::greater<double>> bids = orderbook.get_bids();
+    const std::map<Price, PriceLevel, std::less<double>> asks = orderbook.get_asks();
+
+    size_t rows = std::max(bids.size(), asks.size());
+    auto bit = bids.begin();
+    auto ait = asks.begin();
+
+    for (size_t i = 0; i < rows; ++i) {
+        std::unordered_map<std::string, std::string> row = get_default_header(headers);
+
+        if (bit != bids.end()) {
+            const auto& [bprice, blevel] = *bit;
+            row["Bid Orders"] = std::to_string(blevel.size());               
+            row["Bid Qty"]    = std::to_string(blevel.total_qty());
+            row["Bid Price"]  = price_to_string(bprice, 2);
+            ++bit;
+        } else {
+            row["Bid Orders"] = "";
+            row["Bid Qty"]    = "";
+            row["Bid Price"]  = "";
+        }
+
+        if (ait != asks.end()) {
+            const auto& [aprice, alevel] = *ait;
+            row["Ask Orders"] = std::to_string(alevel.size());
+            row["Ask Qty"]    = std::to_string(alevel.total_qty());
+            row["Ask Price"]  = price_to_string(aprice, 2);
+            ++ait;
+        } else {
+            row["Ask Orders"] = "";
+            row["Ask Qty"]    = "";
+            row["Ask Price"]  = "";
+        }
+        int temp_total = 0;
+
+        for (const auto& header: headers) {
+            column_max_size[header] = std::max(column_max_size[header], static_cast<int>(row[header].size()));
+            temp_total += column_max_size[header];
+        }
+
+        total_col_size = std::max(total_col_size, temp_total);
+        orderbook_table_rows.push_back(std::move(row));
+    }
+
+    std::vector<std::string> printables;
+    
+    for (auto& mp: orderbook_table_rows) {
+        printables.push_back(row_to_string(headers, mp, column_max_size));
+    }
+
+    std::string res;
+
+    for (int i = 0; i < printables.size(); ++i) {
+        res += printables[i] + "\n";
+
+        if (i == 0 || i == printables.size()-1) {
+            res += std::string(total_col_size+20, '-') + "\n";
+        }
+    }
+
+    return os << '\n' << res;
+}

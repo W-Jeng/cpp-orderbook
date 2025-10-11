@@ -21,6 +21,7 @@ TEST(OrderBook, Basic) {
     orderbook.add_order(order4);
     orderbook.add_order(order5);
     orderbook.add_order(order6);
+    std::cout << orderbook;
 
     EXPECT_EQ(orderbook.get_best_bid(), 103.0);
     EXPECT_EQ(orderbook.get_best_ask(), 104.0);
