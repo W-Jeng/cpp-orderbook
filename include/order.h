@@ -65,20 +65,13 @@ struct ExchangeOrder{
         _updated_time = now; 
     }
 
-    void set_updated_time(TimePoint t) {
-        _updated_time = t;
-    }
-
-    void set_order_status(const OrderStatus new_status) {
-        _status = new_status;
-    }
-    
     void match(Quantity fill_qty) {
         if (_quantity_filled + fill_qty > _quantity) {
             throw std::runtime_error("Unable to carry add fill quantity due to it exceeds the order quantity amount");
         }
         
         _quantity_filled += fill_qty;
+        _updated_time = std::chrono::system_clock::now();
         
         if (_quantity_filled == _quantity) {
             _status = OrderStatus::FULLY_FILLED;  
@@ -93,15 +86,18 @@ struct ExchangeOrder{
             return false;   
         }
         
+        _updated_time = std::chrono::system_clock::now();
         _status = OrderStatus::CANCELLED;
         return true;
     }
     
     void set_price(Price new_price) {
+        _updated_time = std::chrono::system_clock::now();
         _price = new_price;
     }
     
     void set_quantity(Quantity new_quantity) {
+        _updated_time = std::chrono::system_clock::now();
         _quantity = new_quantity;
     }
 };

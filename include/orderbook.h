@@ -35,7 +35,8 @@ public:
                 add_order_dispatcher(_asks, std::move(eorder));
                 break;
         }
-        
+
+        try_match();
         return order_id;
     }
     
@@ -125,6 +126,8 @@ public:
         } catch (...) {
             std::cerr << "Unknown exception caught in modify order dispatcher!" << std::endl;   
         }
+        
+        try_match();
         return false;
     }
     
@@ -194,6 +197,8 @@ public:
             match_orders(bid_order, ask_order);
             best_bid_price_level.pop_front_order_if_filled();
             best_ask_price_level.pop_front_order_if_filled();
+            remove_price_level_if_empty(_bids, bid_it);
+            remove_price_level_if_empty(_asks, ask_it);
         }
         
         return order_matched;
@@ -215,6 +220,20 @@ public:
         return _next_available_order_id++;
     }
     
+    Price get_best_bid() {
+        if (_bids.empty()) {
+            return -1.0;
+        }
+        return _bids.begin() -> first;
+    }
+
+    Price get_best_ask() {
+        if (_asks.empty()) {
+            return -1.0;
+        }
+
+        return _asks.begin() -> first;
+    }
 
 private:
     const Instrument _instrument;
