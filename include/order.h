@@ -22,6 +22,7 @@ using Instrument = std::string;
 using OrderId = uint64_t;
 using Price = double;
 using Quantity = uint64_t;
+constexpr OrderId INVALID_ORDER_ID = UINT64_MAX; 
 
 // for client submission
 struct Order{

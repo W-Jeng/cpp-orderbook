@@ -16,12 +16,15 @@ constexpr std::size_t CACHE_LINE_SIZE = std::hardware_destructive_interference_s
 
 class alignas(CACHE_LINE_SIZE) OrderBook {
 public:
+    inline static constexpr size_t ORDER_REGISTRY_RESERVE = 1'000'000;
+
     explicit OrderBook(const Instrument& instrument, IdAllocator& id_allocator): 
         _instrument(instrument),
         _id_allocator(id_allocator),
         _order_id_block(id_allocator.get_next_id_block())
     {
         _next_available_order_id = _order_id_block._start;
+        _order_registry.reserve(ORDER_REGISTRY_RESERVE);
     }
     
     // returns order id
