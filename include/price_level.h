@@ -63,6 +63,10 @@ public:
         return *(_orders_list.begin());
     }
     
+    const ExchangeOrder* front() const {
+        return *(_orders_list.begin());
+    }
+
     void pop_front_order_if_filled() {
         if (empty()) {
             return;   
@@ -75,8 +79,31 @@ public:
         }
     }
     
+    const OrderList& get_order_list() const {
+        return _orders_list;
+    }
+
 private:
     const Price _price;
     OrderList _orders_list;
     std::unordered_map<OrderId, OrderList::iterator> _orders_map;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const PriceLevel& price_level) {
+    os << "PriceLevel(";
+    const std::list<ExchangeOrder*> orders_list = price_level.get_order_list();
+    auto it = orders_list.begin();
+    
+    while (it != orders_list.end()) {
+        if (it != orders_list.begin()) {
+            os << "->";
+        }
+
+        ExchangeOrder* order = *it;
+        os << *order;
+        ++it;
+    }
+
+    os << ")";
+    return os;
+}
