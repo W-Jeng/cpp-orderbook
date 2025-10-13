@@ -1,5 +1,7 @@
 #pragma once
+
 #include <vector>
+#include <atomic>
 
 // a very simple implementation of ring buffer
 template <typename T>

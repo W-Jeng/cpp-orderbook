@@ -79,9 +79,8 @@ public:
     }
 
     void match(Quantity fill_qty) {
-        if (_quantity_filled + fill_qty > _quantity) {
+        if (_quantity_filled + fill_qty > _quantity) 
             throw std::runtime_error("Unable to carry add fill quantity due to it exceeds the order quantity amount");
-        }
         
         _quantity_filled += fill_qty;
         _updated_time = std::chrono::system_clock::now();
@@ -95,9 +94,8 @@ public:
     }
     
     bool cancel() {
-        if (_status == OrderStatus::FULLY_FILLED || _status == OrderStatus::CANCELLED) {
+        if (_status == OrderStatus::FULLY_FILLED || _status == OrderStatus::CANCELLED) 
             return false;   
-        }
         
         _updated_time = std::chrono::system_clock::now();
         _status = OrderStatus::CANCELLED;

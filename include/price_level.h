@@ -52,9 +52,8 @@ public:
     Quantity total_qty() const {
         Quantity qty = 0;
         
-        for (auto order: _orders_list) {
+        for (auto order: _orders_list) 
             qty += (order -> get_quantity() - order -> get_quantity_filled());
-        }
         
         return qty;
     }
@@ -68,15 +67,13 @@ public:
     }
 
     void pop_front_order_if_filled() {
-        if (empty()) {
+        if (empty()) 
             return;   
-        }
         
         Order* order = front();
 
-        if (order -> get_status() == OrderStatus::FULLY_FILLED) {
+        if (order -> get_status() == OrderStatus::FULLY_FILLED)
             _orders_list.pop_front();
-        }
     }
     
     const OrderList& get_order_list() const {

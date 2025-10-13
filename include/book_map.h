@@ -19,17 +19,15 @@ public:
         _book.reserve(BOOK_RESERVE);
         _registry.reserve(ORDER_REGISTRY_RESERVE);
 
-        for (const auto& instrument: instruments) {
+        for (const auto& instrument: instruments) 
             _book.try_emplace(instrument, instrument, _id_allocator);
-        }
     }
 
     OrderId add_order(const Order& order) {
         auto orderbook_it = _book.find(order.get_instrument());
 
-        if (orderbook_it == _book.end()) {
+        if (orderbook_it == _book.end()) 
             return INVALID_ORDER_ID;
-        }
 
         OrderId id = (orderbook_it -> second).add_order(order);
         _registry[id] = &(orderbook_it -> second);
@@ -39,9 +37,8 @@ public:
     bool cancel_order(OrderId order_id) {
         auto orderbook_it = _registry.find(order_id);
 
-        if (orderbook_it == _registry.end()) {
+        if (orderbook_it == _registry.end())
             return false;
-        }
 
         OrderBook* orderbook = orderbook_it -> second;
         
@@ -56,9 +53,8 @@ public:
     bool modify_order(OrderId order_id, Price price, Quantity quantity) {
         auto orderbook_it = _registry.find(order_id);
 
-        if (orderbook_it == _registry.end()) {
+        if (orderbook_it == _registry.end())
             return false;
-        }
 
         OrderBook* orderbook = orderbook_it -> second;
         return orderbook -> modify_order(order_id, price, quantity);
