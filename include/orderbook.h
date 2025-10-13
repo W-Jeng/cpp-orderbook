@@ -30,9 +30,9 @@ public:
     // returns order id
     OrderId add_order(const Order& client_order) {
         std::unique_ptr<Order> order = std::make_unique<Order>(std::move(client_order), get_order_id());
-        OrderId order_id = order -> _id;
+        OrderId order_id = order -> get_id();
 
-        switch (client_order._side) {
+        switch (client_order.get_side()) {
             case OrderSide::BUY:
                 add_order_dispatcher(_bids, std::move(order));           
                 break;
@@ -68,7 +68,7 @@ public:
         }
         
         try {
-            switch (order -> _side) {
+            switch (order -> get_side()) {
                 case OrderSide::BUY:
                     cancel_order_dispatcher(_bids, order);           
                     break;
@@ -111,15 +111,15 @@ public:
             return false;
         
         Order* order = (it->second).get();
-        OrderStatus status = order -> _status;
+        OrderStatus status = order -> get_status();
         
         if (status == OrderStatus::CANCELLED || status == OrderStatus::FULLY_FILLED) 
             return false;   
         
-        OrderSide side = order -> _side;
+        OrderSide side = order -> get_side();
         
         try {
-            switch (order -> _side) {
+            switch (order -> get_side()) {
                 case OrderSide::BUY:
                     return modify_order_dispatcher(_bids, order, price, quantity);           
                 case OrderSide::SELL:
@@ -170,7 +170,7 @@ public:
     }
     
     bool validate_modify_order(Order* order, Price new_price, Quantity new_qty) {
-        if (new_price <= 0.0 || new_qty <= order -> _quantity_filled) 
+        if (new_price <= 0.0 || new_qty <= order -> get_quantity_filled()) 
             return false;   
         
         return true;
@@ -211,8 +211,8 @@ public:
     }
     
     void match_orders(Order* bid_order, Order* ask_order) {
-        Quantity bid_available = bid_order -> _quantity - bid_order -> _quantity_filled;
-        Quantity ask_available = ask_order -> _quantity - ask_order -> _quantity_filled;
+        Quantity bid_available = bid_order -> get_quantity() - bid_order -> get_quantity_filled();
+        Quantity ask_available = ask_order -> get_quantity() - ask_order -> get_quantity_filled();
         Quantity match_qty = std::min(bid_available, ask_available);
         bid_order -> match(match_qty);
         ask_order -> match(match_qty);

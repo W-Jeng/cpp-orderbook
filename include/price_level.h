@@ -17,7 +17,7 @@ public:
     {}
 
     void add_order(Order* order) {
-        const OrderId order_id = order -> _id;
+        const OrderId order_id = order -> get_id();
         _orders_list.push_back(order);
         auto it = --_orders_list.end();
         _orders_map[order_id] = it;
@@ -36,7 +36,7 @@ public:
     }
     
     void remove_order_on_it(OrderList::iterator order_it) {
-        OrderId order_id = (*order_it) -> _id;
+        OrderId order_id = (*order_it) -> get_id();
         _orders_list.erase(order_it);
         _orders_map.erase(order_id);
     }
@@ -53,7 +53,7 @@ public:
         Quantity qty = 0;
         
         for (auto order: _orders_list) {
-            qty += (order -> _quantity - order -> _quantity_filled);
+            qty += (order -> get_quantity() - order -> get_quantity_filled());
         }
         
         return qty;
@@ -74,7 +74,7 @@ public:
         
         Order* order = front();
 
-        if (order -> _status == OrderStatus::FULLY_FILLED) {
+        if (order -> get_status() == OrderStatus::FULLY_FILLED) {
             _orders_list.pop_front();
         }
     }

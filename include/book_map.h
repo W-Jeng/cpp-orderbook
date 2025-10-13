@@ -25,7 +25,7 @@ public:
     }
 
     OrderId add_order(const Order& order) {
-        auto orderbook_it = _book.find(order._instrument);
+        auto orderbook_it = _book.find(order.get_instrument());
 
         if (orderbook_it == _book.end()) {
             return INVALID_ORDER_ID;

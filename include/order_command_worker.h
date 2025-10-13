@@ -43,7 +43,11 @@ public:
                 book.add_order(cmd.order);
                 break;
             case OrderCommand::Type::MODIFY:
-                book.modify_order(cmd.order.
+                book.modify_order(cmd.order.get_id(), cmd.order.get_price(), cmd.order.get_quantity());
+                break;
+            case OrderCommand::Type::CANCEL:
+                book.cancel_order(cmd.order.get_id());
+                break;
         }
         
         return true;   

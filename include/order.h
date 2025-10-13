@@ -28,19 +28,25 @@ constexpr OrderId FIRST_ORDER_ID = 1;
 constexpr OrderId INVALID_ORDER_ID = UINT64_MAX; 
 
 // for exchange submission
-struct Order{
+class Order{
+public:
     using Clock = std::chrono::system_clock;
     using TimePoint = std::chrono::time_point<Clock>;
 
-    Instrument _instrument;
-    OrderSide _side;
-    Price _price;
-    Quantity _quantity;
-    OrderId _id;
-    Quantity _quantity_filled;
-    OrderStatus _status;
-    TimePoint _time_submitted;
-    TimePoint _updated_time;
+    // default
+    Order():
+        _instrument(""),
+        _side(OrderSide::BUY),
+        _price(0.0),
+        _quantity(0),
+        _id(DEFAULT_ORDER_ID),
+        _quantity_filled(0),
+        _status(OrderStatus::NEW)
+    {
+        TimePoint now = std::chrono::system_clock::now();
+        _time_submitted = now;
+        _updated_time = now; 
+    }
     
     // information received from client
     Order(Instrument instrument, OrderSide side, Price price, Quantity quantity):
@@ -98,15 +104,57 @@ struct Order{
         return true;
     }
     
+    Price get_price() const {
+        return _price;
+    }
+    
     void set_price(Price new_price) {
         _updated_time = std::chrono::system_clock::now();
         _price = new_price;
     }
     
-    void set_quantity(Quantity new_quantity) {
-        _updated_time = std::chrono::system_clock::now();
-        _quantity = new_quantity;
+    Quantity get_quantity() const {
+        return _quantity;   
     }
+    
+    Quantity get_quantity_filled() const {
+        return _quantity_filled;  
+    }
+    
+    Instrument get_instrument() const {
+        return _instrument;
+    }
+
+    OrderId get_id() const {
+        return _id;
+    }
+    
+    OrderStatus get_status() const {
+        return _status;   
+    }
+
+    OrderSide get_side() const {
+        return _side;   
+    }
+
+    TimePoint get_time_submitted() const {
+        return _time_submitted;   
+    }
+
+    TimePoint get_updated_time() const {
+        return _time_submitted;   
+    }
+
+private:
+    Instrument _instrument;
+    OrderSide _side;
+    Price _price;
+    Quantity _quantity;
+    OrderId _id;
+    Quantity _quantity_filled;
+    OrderStatus _status;
+    TimePoint _time_submitted;
+    TimePoint _updated_time;
 };
 
 struct OrderCommand {
@@ -131,9 +179,9 @@ struct OrderCommand {
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Order& order) {
-    const char* side_str = (order._side == OrderSide::BUY ? "BUY" : "SELL");
-    std::time_t updated_time_t = std::chrono::system_clock::to_time_t(order._updated_time);
-    return os << "ExchangeOrder(instrument=" << order._instrument << ", id=" << order._id << 
-        ", side=" << side_str << ", price=" << order._price << ", quantity=" << order._quantity << 
+    const char* side_str = (order.get_side() == OrderSide::BUY ? "BUY" : "SELL");
+    std::time_t updated_time_t = std::chrono::system_clock::to_time_t(order.get_updated_time());
+    return os << "ExchangeOrder(instrument=" << order.get_instrument() << ", id=" << order.get_id() << 
+        ", side=" << side_str << ", price=" << order.get_price() << ", quantity=" << order.get_quantity() << 
         ", updated_time=" << updated_time_t << ")";
 }
