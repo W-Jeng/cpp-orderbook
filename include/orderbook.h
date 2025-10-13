@@ -263,15 +263,6 @@ private:
     OrderId _next_available_order_id;
 };
 
-struct OrderBookTableRow {
-    std::string bid_orders;
-    std::string bid_qty;
-    std::string bid_price;
-    std::string ask_price;
-    std::string ask_qty;
-    std::string ask_orders;
-};
-
 inline std::string price_to_string(double p, int precision = 2) {
     std::ostringstream oss;
     oss.setf(std::ios::fixed);
@@ -318,6 +309,7 @@ inline std::ostream& operator<<(std::ostream& os, const OrderBook& orderbook) {
     //      2     |  1000   |    1.0    ||    1.01   |  500    |    5
     //      1     |   500   |    0.98   ||    1.05   |  300    |    2
     // ---------------------------------------------------------------------
+
     std::vector<std::string> headers = {
         "Bid Orders", "Bid Qty", "Bid Price", "Ask Price", "Ask Qty", "Ask Orders"
     };
