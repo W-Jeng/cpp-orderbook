@@ -7,7 +7,7 @@
 
 int main() {
     Order order{"SPY", OrderSide::BUY, 100.0, 200};
-    ExchangeOrder eorder(order, 123);
+    Order eorder(std::move(order), 123);
     IdAllocator id_allocator;
     OrderBook order_book("SPY", id_allocator);
     OrderId order_id = order_book.add_order(order);

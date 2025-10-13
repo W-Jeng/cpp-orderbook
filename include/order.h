@@ -179,7 +179,27 @@ struct OrderCommand {
 inline std::ostream& operator<<(std::ostream& os, const Order& order) {
     const char* side_str = (order.get_side() == OrderSide::BUY ? "BUY" : "SELL");
     std::time_t updated_time_t = std::chrono::system_clock::to_time_t(order.get_updated_time());
-    return os << "ExchangeOrder(instrument=" << order.get_instrument() << ", id=" << order.get_id() << 
+    return os << "Order(instrument=" << order.get_instrument() << ", id=" << order.get_id() << 
         ", side=" << side_str << ", price=" << order.get_price() << ", quantity=" << order.get_quantity() << 
         ", updated_time=" << updated_time_t << ")";
+}
+
+inline std::ostream& operator<<(std::ostream& os, const OrderCommand& order_cmd) {
+    std::string command_type;
+    
+    switch (order_cmd.type) {
+        case OrderCommand::Type::ADD:
+            command_type = "ADD";   
+            break;
+
+        case OrderCommand::Type::MODIFY:
+            command_type = "MODIFY";   
+            break;
+
+        case OrderCommand::Type::CANCEL:
+            command_type = "CANCEL";   
+            break;
+    }
+    
+    return os << "OrderCommand(type=" << command_type << ", order=" << order_cmd.order << ")";
 }
