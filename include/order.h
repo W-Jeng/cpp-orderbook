@@ -114,6 +114,10 @@ public:
     Quantity get_quantity() const {
         return _quantity;   
     }
+
+    void set_quantity(Quantity qty) {
+        _quantity = qty;
+    }
     
     Quantity get_quantity_filled() const {
         return _quantity_filled;  

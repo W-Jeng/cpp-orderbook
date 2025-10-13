@@ -23,7 +23,7 @@ public:
             _book.try_emplace(instrument, instrument, _id_allocator);
     }
 
-    OrderId add_order(const Order& order) {
+    OrderId add_order(Order& order) {
         auto orderbook_it = _book.find(order.get_instrument());
 
         if (orderbook_it == _book.end()) 

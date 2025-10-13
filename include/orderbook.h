@@ -28,7 +28,7 @@ public:
     }
     
     // returns order id
-    OrderId add_order(const Order& client_order) {
+    OrderId add_order(Order& client_order) {
         std::unique_ptr<Order> order = std::make_unique<Order>(std::move(client_order), get_order_id());
         OrderId order_id = order -> get_id();
 
@@ -48,10 +48,10 @@ public:
     
     template <typename MapType>
     void add_order_dispatcher(MapType& side_levels, std::unique_ptr<Order> order) {
-        auto [it, inserted] = side_levels.try_emplace(order -> _price, order -> _price);
+        auto [it, inserted] = side_levels.try_emplace(order -> get_price(), order -> get_price());
         PriceLevel& p_level = it -> second;
         p_level.add_order(order.get());
-        _order_registry[order -> _id] = std::move(order);
+        _order_registry[order -> get_id()] = std::move(order);
     }
 
     bool cancel_order(OrderId order_id) {
@@ -89,9 +89,9 @@ public:
     
     template<typename MapType>
     void cancel_order_dispatcher(MapType& side_levels, Order* order) {
-        auto it = side_levels.find(order -> _price);
+        auto it = side_levels.find(order -> get_price());
         PriceLevel& price_level = it -> second;
-        price_level.remove_order(order -> _id);
+        price_level.remove_order(order -> get_id());
         remove_price_level_if_empty(side_levels, it);
     }
     
@@ -142,13 +142,13 @@ public:
         if (!validate_modify_order(order, new_price, new_qty))
             return false;   
         
-        auto it = side_levels.find(order -> _price);
+        auto it = side_levels.find(order -> get_price());
         PriceLevel& old_price_level = it -> second;
-        bool price_changed = (order -> _price != new_price);
-        bool quantity_changed = (order -> _quantity != new_qty);
+        bool price_changed = (order -> get_price() != new_price);
+        bool quantity_changed = (order -> get_quantity() != new_qty);
         
         if (price_changed) {
-            old_price_level.remove_order(order -> _id);   
+            old_price_level.remove_order(order -> get_id());   
             order -> set_price(new_price);
             auto [it, inserted] = side_levels.try_emplace(new_price, new_price);
             PriceLevel& new_price_level = it -> second;
@@ -156,11 +156,11 @@ public:
         }
         
         if (quantity_changed) {
-            bool quantity_increased = (new_qty > order -> _quantity);
+            bool quantity_increased = (new_qty > order -> get_quantity());
             order -> set_quantity(new_qty);
             
             if (quantity_increased && !price_changed) {
-                old_price_level.remove_order(order -> _id);
+                old_price_level.remove_order(order -> get_id());
                 old_price_level.add_order(order);
             }
         }

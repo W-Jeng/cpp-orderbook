@@ -76,13 +76,13 @@ TEST(OrderBook, ModifyOrder) {
     // decrease quantity, no order changed
     orderbook.modify_order(id1, 99.0, 200);
     const PriceLevel& best_level = bids.begin() -> second;
-    const ExchangeOrder* order_bb1 = best_level.front();
-    EXPECT_EQ(order_bb1 -> _id, id1);
+    const Order* order_bb1 = best_level.front();
+    EXPECT_EQ(order_bb1 -> get_id(), id1);
 
     // increase quantity, queue priority changed
     orderbook.modify_order(id1, 99.0, 300);
-    const ExchangeOrder* order_bb2 = best_level.front();
-    EXPECT_EQ(order_bb2 -> _id, id2);
+    const Order* order_bb2 = best_level.front();
+    EXPECT_EQ(order_bb2 -> get_id(), id2);
 }
 
 TEST(OrderBook, CancelOrder) {
@@ -107,14 +107,14 @@ TEST(OrderBook, CancelOrder) {
     EXPECT_EQ(orderbook.get_best_bid(), 99.0);
 
     const PriceLevel& best_level = bids.begin() -> second;
-    const ExchangeOrder* order_bb1 = best_level.front();
-    EXPECT_EQ(order_bb1 -> _id, id2);
+    const Order* order_bb1 = best_level.front();
+    EXPECT_EQ(order_bb1 -> get_id(), id2);
     EXPECT_EQ(best_level.size(), 2);
 
     orderbook.cancel_order(id2);
-    const ExchangeOrder* order_bb2 = best_level.front();
+    const Order* order_bb2 = best_level.front();
     EXPECT_EQ(orderbook.get_best_bid(), 99.0);
-    EXPECT_EQ(order_bb2 -> _id, id4);
+    EXPECT_EQ(order_bb2 -> get_id(), id4);
     EXPECT_EQ(best_level.size(), 1);
 
     // invalided the whole best level, no order left
