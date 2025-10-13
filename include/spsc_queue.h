@@ -20,12 +20,12 @@ public:
             return false;
             
         _buffer[_head] = item;
-        _head = _next;
+        _head = next;
         return true;
     }
     
     bool pop(T& item) {
-        if (_tail == head)
+        if (_tail == _head)
             return false;
             
         item = _buffer[_tail];

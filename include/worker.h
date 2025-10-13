@@ -6,7 +6,7 @@
 #include <order.h>
 #include <orderbook.h>
 
-class Worker{
+class alignas(CACHE_LINE_SIZE) Worker {
 public:
     Worker(SPSCQueue<OrderCommand>* q, std::vector<OrderBook>&& books):
         _queue(q)
@@ -22,19 +22,17 @@ public:
         
         while (true) {
             if (_queue -> pop(cmd)) {
-                if (!process_command(cmd)) {
-                    // cannot find the instrument       
-                }
+                // we only hand those that are successful
+                process_command(cmd);
             }
         }
     }
     
-    bool process_command(const OrderCommand& cmd) {
+    bool process_command(OrderCommand& cmd) {
         auto it = _books.find(cmd.order.get_instrument());
         
-        if (it == _books.end()) {
+        if (it == _books.end()) 
             return false;   
-        }
         
         auto& book = it -> second;
         
