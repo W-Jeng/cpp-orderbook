@@ -10,13 +10,13 @@
 
 class PriceLevel {
 public:
-    using OrderList = std::list<ExchangeOrder*>;
+    using OrderList = std::list<Order*>;
 
     PriceLevel(Price price):
         _price(price)
     {}
 
-    void add_order(ExchangeOrder* order) {
+    void add_order(Order* order) {
         const OrderId order_id = order -> _id;
         _orders_list.push_back(order);
         auto it = --_orders_list.end();
@@ -59,11 +59,11 @@ public:
         return qty;
     }
     
-    ExchangeOrder* front() {
+    Order* front() {
         return *(_orders_list.begin());
     }
     
-    const ExchangeOrder* front() const {
+    const Order* front() const {
         return *(_orders_list.begin());
     }
 
@@ -72,7 +72,7 @@ public:
             return;   
         }
         
-        ExchangeOrder* order = front();
+        Order* order = front();
 
         if (order -> _status == OrderStatus::FULLY_FILLED) {
             _orders_list.pop_front();
@@ -91,7 +91,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& os, const PriceLevel& price_level) {
     os << "PriceLevel(";
-    const std::list<ExchangeOrder*> orders_list = price_level.get_order_list();
+    const std::list<Order*> orders_list = price_level.get_order_list();
     auto it = orders_list.begin();
     
     while (it != orders_list.end()) {
@@ -99,7 +99,7 @@ inline std::ostream& operator<<(std::ostream& os, const PriceLevel& price_level)
             os << "->";
         }
 
-        ExchangeOrder* order = *it;
+        Order* order = *it;
         os << *order;
         ++it;
     }

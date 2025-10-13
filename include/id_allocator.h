@@ -38,5 +38,5 @@ public:
 
 private:
     const OrderId _block_size;
-    OrderId _global_counter{0};
+    OrderId _global_counter{FIRST_ORDER_ID};
 };

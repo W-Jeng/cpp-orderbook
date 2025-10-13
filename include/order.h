@@ -22,43 +22,49 @@ using Instrument = std::string;
 using OrderId = uint64_t;
 using Price = double;
 using Quantity = uint64_t;
+
+constexpr OrderId DEFAULT_ORDER_ID = 0; 
+constexpr OrderId FIRST_ORDER_ID = 1; 
 constexpr OrderId INVALID_ORDER_ID = UINT64_MAX; 
 
-// for client submission
+// for exchange submission
 struct Order{
+    using Clock = std::chrono::system_clock;
+    using TimePoint = std::chrono::time_point<Clock>;
+
     Instrument _instrument;
     OrderSide _side;
     Price _price;
     Quantity _quantity;
-
-    Order(Instrument instrument, OrderSide side, Price price, Quantity quantity):
-        _instrument(instrument),
-        _side(side),
-        _price(price),
-        _quantity(quantity)
-    {}
-};
-
-// for exchange submission
-struct ExchangeOrder{
-    using Clock = std::chrono::system_clock;
-    using TimePoint = std::chrono::time_point<Clock>;
-
     OrderId _id;
-    OrderSide _side;
-    Price _price;
-    Quantity _quantity;
     Quantity _quantity_filled;
     OrderStatus _status;
     TimePoint _time_submitted;
     TimePoint _updated_time;
-
-    ExchangeOrder(const Order& order, OrderId id): 
-        _side(order._side),
-        _price(order._price),
-        _quantity(order._quantity),
+    
+    // information received from client
+    Order(Instrument instrument, OrderSide side, Price price, Quantity quantity):
+        _instrument(std::move(instrument)),
+        _side(side),
+        _price(price),
+        _quantity(quantity),
+        _id(DEFAULT_ORDER_ID),
         _quantity_filled(0),
-        _id(id),
+        _status(OrderStatus::NEW)
+    {
+        TimePoint now = std::chrono::system_clock::now();
+        _time_submitted = now;
+        _updated_time = now; 
+    }
+    
+    // information constructed for Orderbook itself
+    Order(Order&& client_order, OrderId allocated_id): 
+        _instrument(std::move(client_order._instrument)),
+        _side(client_order._side),
+        _price(client_order._price),
+        _quantity(client_order._quantity),
+        _id(allocated_id),
+        _quantity_filled(0),
         _status(OrderStatus::NEW)
     {
         TimePoint now = std::chrono::system_clock::now();
@@ -103,18 +109,31 @@ struct ExchangeOrder{
     }
 };
 
-using OrderPtr = std::unique_ptr<ExchangeOrder>;
+struct OrderCommand {
+    enum class Type {
+        ADD,
+        MODIFY,
+        CANCEL
+    };
 
-inline std::ostream& operator<<(std::ostream& os, const ExchangeOrder& eorder) {
-    const char* side_str = (eorder._side == OrderSide::BUY ? "BUY" : "SELL");
-    std::time_t updated_time_t = std::chrono::system_clock::to_time_t(eorder._updated_time);
-    return os << "ExchangeOrder(id=" << eorder._id << ", side=" << side_str <<
-        ", price=" << eorder._price << ", quantity=" << eorder._quantity << 
-        ", updated_time=" << updated_time_t << ")";
-}
+    Type type;
+    Order order;
+    
+    OrderCommand():
+        type(Type::ADD),
+        order(Order{})
+    {}
+
+    OrderCommand(Type t, const Order& o):
+        type(t),
+        order(o)
+    {}
+};
 
 inline std::ostream& operator<<(std::ostream& os, const Order& order) {
     const char* side_str = (order._side == OrderSide::BUY ? "BUY" : "SELL");
-    return os << "Order(side=" << side_str <<
-        ", price=" << order._price << ", quantity=" << order._quantity << ")";
+    std::time_t updated_time_t = std::chrono::system_clock::to_time_t(order._updated_time);
+    return os << "ExchangeOrder(instrument=" << order._instrument << ", id=" << order._id << 
+        ", side=" << side_str << ", price=" << order._price << ", quantity=" << order._quantity << 
+        ", updated_time=" << updated_time_t << ")";
 }

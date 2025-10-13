@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
+// This implementation is likely not correct due to the multithreaded nature we are aiming for
 // A wrapper to distribute the orders to different OrderBook
 class BookMap {
 public:
