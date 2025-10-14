@@ -2,10 +2,11 @@
 
 #include <vector>
 #include <atomic>
+#include <new>
 
 // a very simple implementation of ring buffer
 template <typename T>
-class SPSCQueue {
+class alignas(std::hardware_destructive_interference_size) SPSCQueue {
 public:
     explicit SPSCQueue(size_t capacity):
         _buffer(capacity),
