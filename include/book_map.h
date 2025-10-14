@@ -1,10 +1,11 @@
 #pragma once
 
-#include <id_allocator.h>
-#include <order.h>
-#include <orderbook.h>
 #include <unordered_map>
 #include <vector>
+#include <id_allocator.h>
+#include <order.h>
+#include <core.h>
+#include <orderbook.h>
 
 // This implementation is likely not correct due to the multithreaded nature we are aiming for
 // A wrapper to distribute the orders to different OrderBook

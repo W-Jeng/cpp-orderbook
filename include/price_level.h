@@ -1,12 +1,13 @@
 #pragma once
 
 #include <list>
-#include <order.h>
 #include <unordered_map>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <order.h>
+#include <core.h>
 
 class PriceLevel {
 public:

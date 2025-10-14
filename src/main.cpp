@@ -5,6 +5,7 @@
 #include <id_allocator.h>
 #include <book_map.h>
 #include <worker.h>
+#include <core.h>
 
 int main() {
     Order order{"SPY", OrderSide::BUY, 100.0, 200};

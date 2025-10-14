@@ -6,13 +6,12 @@
 #include <new>
 #include <vector>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <price_level.h>
 #include <order.h>
 #include <id_allocator.h>
-#include <sstream>
-#include <iomanip>
-
-constexpr std::size_t CACHE_LINE_SIZE = std::hardware_destructive_interference_size;
+#include <core.h>
 
 class alignas(CACHE_LINE_SIZE) OrderBook {
 public:

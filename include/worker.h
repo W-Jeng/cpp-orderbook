@@ -5,6 +5,7 @@
 #include <vector>
 #include <order.h>
 #include <orderbook.h>
+#include <core.h>
 
 class alignas(CACHE_LINE_SIZE) Worker {
 public:

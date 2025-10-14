@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <order.h>
+#include <core.h>
 
 struct OrderIdBlock{
     OrderId _start;

@@ -5,6 +5,7 @@
 #include <order.h>
 #include <spsc_queue.h>
 #include <unordered_map>
+#include <core.h>
 
 class Producer {
 public:

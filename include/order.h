@@ -5,6 +5,7 @@
 #include <iostream>
 #include <chrono>
 #include <memory>
+#include <core.h>
 
 enum class OrderSide {
     BUY,
@@ -17,15 +18,6 @@ enum class OrderStatus {
     FULLY_FILLED,
     CANCELLED
 };
-
-using Instrument = std::string;
-using OrderId = uint64_t;
-using Price = double;
-using Quantity = uint64_t;
-
-constexpr OrderId DEFAULT_ORDER_ID = 0; 
-constexpr OrderId FIRST_ORDER_ID = 1; 
-constexpr OrderId INVALID_ORDER_ID = UINT64_MAX; 
 
 // for exchange submission
 class Order{
