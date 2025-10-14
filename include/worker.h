@@ -22,7 +22,7 @@ public:
         
         while (true) {
             if (_queue -> pop(cmd)) {
-                // we only hand those that are successful
+                // currently, we only hand those that are successful
                 process_command(cmd);
             }
         }
