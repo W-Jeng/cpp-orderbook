@@ -22,7 +22,7 @@ void signal_handler(int signal) {
 
 int main() {
     constexpr size_t NUM_WORKERS = 2;
-    constexpr size_t QUEUE_CAP = 500000;
+    constexpr size_t QUEUE_CAP = 4096;
     std::vector<std::thread> worker_threads;
     worker_threads.reserve(NUM_WORKERS);
     std::vector<Instrument> instruments = {"AAPL", "MSFT", "TSLA", "GOOG"};
@@ -51,6 +51,7 @@ int main() {
         // std::this_thread::sleep_for(std::chrono::milliseconds(200));   
         // use producer to push work here, since the pushing will be completed before this loops ends, this is fine
     // }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));   
     using clock = std::chrono::high_resolution_clock;
     auto start = clock::now();
     

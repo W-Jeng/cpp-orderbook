@@ -20,6 +20,7 @@ public:
     
     void run() {
         OrderCommand cmd{};
+        int count = 0;
 
         while (true) {
             if (_queue -> pop(cmd)) {
@@ -27,10 +28,13 @@ public:
                 if (cmd.type == OrderCommand::Type::SHUTDOWN)
                     break;
                 
+                ++count;
                 // currently, we only hand those that are successful
                 process_command(cmd);
             }
         }
+
+        std::cout << "Count: " << count << "\n";
     }
     
     bool process_command(OrderCommand& cmd) {
