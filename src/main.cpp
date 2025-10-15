@@ -6,22 +6,63 @@
 #include <book_map.h>
 #include <worker.h>
 #include <core.h>
+#include <order_routing_system.h>
+#include <thread>
+#include <csignal>
+
+std::atomic<bool> shutdown_requested{false};
+
+void signal_handler(int signal) {
+    if (signal == SIGINT) {
+        shutdown_requested.store(true);
+        std::cout << "Received Ctrl+C, shutting down....\n";
+    }
+}
 
 int main() {
-    Order order{"SPY", OrderSide::BUY, 100.0, 200};
-    Order eorder(std::move(order), 123);
+    constexpr size_t NUM_WORKERS = 2;
+    constexpr size_t QUEUE_CAP = 4096;
+    std::vector<std::thread> worker_threads.reserve(NUM_WORKERS);
+    std::vector<Instrument> instruments = {"AAPL", "MSFT", "TSLA", "GOOG"};
     IdAllocator id_allocator;
-    OrderBook order_book("SPY", id_allocator);
-    OrderId order_id = order_book.add_order(order);
-
-    std::cout << order << "\n";
-    std::cout << "assigned order id: " << order_id << "\n";
-
-    order_book.modify_order(order_id, 3.01, 100);
-    order_book.modify_order(order_id, 3.01, 200);
-    order_book.modify_order(order_id, 4.01, 300);
-    order_book.cancel_order(order_id);
-
-    std::cout << eorder << "\n";
+    OrderRoutingSystem order_routing_sys = build_order_routing_system(
+        instruments,
+        id_allocator,
+        NUM_WORKERS,
+        QUEUE_CAP
+    );
+    
+    for (size_t i = 0; i < NUM_WORKERS; ++i) {
+        worker_threads.emplace_back([&, i]() mutable {
+            Worker worker(
+                order_routing_sys.queues[i].get(), 
+                std::move(order_routing_sys.worker_orderbooks[i])
+            );
+            worker.run();
+        });
+    }
+    
+    std::signal(SIGINT, signal_handler);
+    Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
+    
+    while (!shutdown_requested.load(std::memory_order_relaxed)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));   
+        // use producer to push work here, since the pushing will be completed before this loops ends, this is fine
+    }
+    
+    std::cout << "Shutdown noted. Stopping workers by sending a poisson pill...\n";
+    
+    for (auto& queue: order_routing_sys.queues) {
+        OrderCommand shutdown_cmd;
+        shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
+        queue -> push(shutdown_cmd);   
+    }
+    
+    for (auto& t: worker_threads) {
+        if (t.joinable())
+            t.join();
+    }
+    
+    std::cout << "All workers stopped cleanly.\n";
     return 0;
 }

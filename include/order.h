@@ -155,7 +155,8 @@ struct OrderCommand {
     enum class Type {
         ADD,
         MODIFY,
-        CANCEL
+        CANCEL,
+        SHUTDOWN // poison pill to stop thread
     };
 
     Type type;
@@ -194,6 +195,10 @@ inline std::ostream& operator<<(std::ostream& os, const OrderCommand& order_cmd)
 
         case OrderCommand::Type::CANCEL:
             command_type = "CANCEL";   
+            break;
+
+        case OrderCommand::Type::SHUTDOWN:
+            command_type = "SHUTDOWN";   
             break;
     }
     
