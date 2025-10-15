@@ -22,7 +22,7 @@ void signal_handler(int signal) {
 
 int main() {
     constexpr size_t NUM_WORKERS = 2;
-    constexpr size_t QUEUE_CAP = 262144;
+    constexpr size_t QUEUE_CAP = 800000;
     std::vector<std::thread> worker_threads;
     worker_threads.reserve(NUM_WORKERS);
     std::vector<Instrument> instruments = {"AAPL", "MSFT", "TSLA", "GOOG"};
@@ -61,13 +61,17 @@ int main() {
     }
     
     std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
+    int queue_shutdown = 0;
     
-    for (auto& queue: order_routing_sys.queues) {
-        OrderCommand shutdown_cmd;
-        shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
-        queue -> push(shutdown_cmd);   
+    while (queue_shutdown != NUM_WORKERS) {
+        for (auto& queue: order_routing_sys.queues) {
+            OrderCommand shutdown_cmd;
+            shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
+            if (queue -> push(shutdown_cmd))
+                ++queue_shutdown;
+        }
     }
-    
+
     for (auto& t: worker_threads) {
         if (t.joinable())
             t.join();
