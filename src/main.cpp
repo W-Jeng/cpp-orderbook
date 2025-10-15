@@ -9,19 +9,20 @@
 #include <order_routing_system.h>
 #include <thread>
 #include <csignal>
+#include <atomic>
 
 std::atomic<bool> shutdown_requested{false};
 
 void signal_handler(int signal) {
     if (signal == SIGINT) {
         shutdown_requested.store(true);
-        std::cout << "Received Ctrl+C, shutting down....\n";
+        std::cout << "\nReceived Ctrl+C, shutting down....\n";
     }
 }
 
 int main() {
     constexpr size_t NUM_WORKERS = 2;
-    constexpr size_t QUEUE_CAP = 4096;
+    constexpr size_t QUEUE_CAP = 500000;
     std::vector<std::thread> worker_threads;
     worker_threads.reserve(NUM_WORKERS);
     std::vector<Instrument> instruments = {"AAPL", "MSFT", "TSLA", "GOOG"};
@@ -46,10 +47,16 @@ int main() {
     std::signal(SIGINT, signal_handler);
     Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
     
-    while (!shutdown_requested.load(std::memory_order_relaxed)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));   
+    // while (!shutdown_requested.load(std::memory_order_relaxed)) {
+        // std::this_thread::sleep_for(std::chrono::milliseconds(200));   
         // use producer to push work here, since the pushing will be completed before this loops ends, this is fine
-        std::cout << "Running producer operations (adding orders) here\n";
+    // }
+    using clock = std::chrono::high_resolution_clock;
+    auto start = clock::now();
+    
+    for (int i = 0; i < 1'000'000; ++i) {
+        Order order{"MSFT", OrderSide::BUY, 100.01, 200};
+        producer.submit(OrderCommand(OrderCommand::Type::ADD, order));
     }
     
     std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
@@ -65,6 +72,9 @@ int main() {
             t.join();
     }
     
+    auto end = clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
     std::cout << "All workers stopped cleanly.\n";
     return 0;
 }

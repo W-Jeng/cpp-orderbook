@@ -20,7 +20,7 @@ public:
     
     void run() {
         OrderCommand cmd{};
-        
+
         while (true) {
             if (_queue -> pop(cmd)) {
                 // poison pill to break

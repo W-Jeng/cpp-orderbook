@@ -26,7 +26,8 @@ OrderRoutingSystem build_order_routing_system(
 ) {
     OrderRoutingSystem order_routing_sys;
     order_routing_sys.queues.reserve(num_workers);
-    order_routing_sys.worker_orderbooks.assign(num_workers, {});
+    order_routing_sys.worker_orderbooks.resize(num_workers);
+
     
     // let's do round-robin to distribute the workload to each worker and map the router accordingly
     for (size_t i = 0; i < instruments.size(); ++i) {

@@ -20,12 +20,21 @@ public:
     explicit OrderBook(const Instrument& instrument, IdAllocator& id_allocator): 
         _instrument(instrument),
         _id_allocator(id_allocator),
-        _order_id_block(id_allocator.get_next_id_block())
+        _order_id_block(id_allocator.get_next_id_block()),
+        _trades_completed(0)
     {
         _next_available_order_id = _order_id_block._start;
         _order_registry.reserve(ORDER_REGISTRY_RESERVE);
     }
     
+    // explicitly allow moving
+    OrderBook(OrderBook&&) noexcept = default;
+    OrderBook& operator=(OrderBook&&) noexcept = default;
+
+    // explicitly forbid copying
+    OrderBook(const OrderBook&) = delete;
+    OrderBook& operator=(const OrderBook&) = delete;
+
     // returns order id
     OrderId add_order(Order& client_order) {
         std::unique_ptr<Order> order = std::make_unique<Order>(std::move(client_order), get_order_id());
@@ -193,6 +202,7 @@ public:
             }
             
             order_matched = true;
+            ++_trades_completed;
             
             // implement order match
             PriceLevel& best_bid_price_level = bid_it -> second;
@@ -240,6 +250,10 @@ public:
         return _asks.begin() -> first;
     }
 
+    uint64_t get_trades_completed() const {
+        return _trades_completed;
+    }
+
     const std::map<Price, PriceLevel, std::greater<double>>& get_bids() const {
         return _bids;
     }
@@ -260,6 +274,7 @@ private:
     IdAllocator& _id_allocator;
     OrderIdBlock _order_id_block;
     OrderId _next_available_order_id;
+    uint64_t _trades_completed;
 };
 
 inline std::string price_to_string(double p, int precision = 2) {
