@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <order.h>
 #include <core.h>
+#include <atomic>
 
 struct OrderIdBlock{
     OrderId _start;
@@ -14,7 +15,6 @@ struct OrderIdBlock{
     {}
 };
 
-// we try with single threaded first
 // the idea is to allocate the thread id in blocks so we can reduce the fetch add for multithreaded (less contention)
 class IdAllocator {
 public:
@@ -29,15 +29,12 @@ public:
     {}
 
     OrderIdBlock get_next_id_block() {
-        OrderId local_start = _global_counter;
-        _global_counter += _block_size;
-        OrderId local_end = _global_counter;
-        // if using atomic
-        // _global_counter = _global_counter.fetch_add(_block_size);
+        OrderId local_start = _global_counter.fetch_add(_block_size);
+        OrderId local_end = local_start + _block_size;
         return OrderIdBlock(local_start, local_end);                 
     }
 
 private:
     const OrderId _block_size;
-    OrderId _global_counter{FIRST_ORDER_ID};
+    std::atomic<OrderId> _global_counter{FIRST_ORDER_ID};
 };
