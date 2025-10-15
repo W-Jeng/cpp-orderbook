@@ -52,7 +52,7 @@ int main() {
         std::cout << "Running producer operations (adding orders) here\n";
     }
     
-    std::cout << "Shutdown noted. Stopping workers by sending a poisson pill...\n";
+    std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
     
     for (auto& queue: order_routing_sys.queues) {
         OrderCommand shutdown_cmd;
