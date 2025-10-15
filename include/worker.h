@@ -23,6 +23,10 @@ public:
         
         while (true) {
             if (_queue -> pop(cmd)) {
+                // poisson pill to break
+                if (cmd.type == OrderCommand::Type::SHUTDOWN)
+                    break;
+                
                 // currently, we only hand those that are successful
                 process_command(cmd);
             }

@@ -22,7 +22,8 @@ void signal_handler(int signal) {
 int main() {
     constexpr size_t NUM_WORKERS = 2;
     constexpr size_t QUEUE_CAP = 4096;
-    std::vector<std::thread> worker_threads.reserve(NUM_WORKERS);
+    std::vector<std::thread> worker_threads;
+    worker_threads.reserve(NUM_WORKERS);
     std::vector<Instrument> instruments = {"AAPL", "MSFT", "TSLA", "GOOG"};
     IdAllocator id_allocator;
     OrderRoutingSystem order_routing_sys = build_order_routing_system(
@@ -48,6 +49,7 @@ int main() {
     while (!shutdown_requested.load(std::memory_order_relaxed)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));   
         // use producer to push work here, since the pushing will be completed before this loops ends, this is fine
+        std::cout << "Running producer operations (adding orders) here\n";
     }
     
     std::cout << "Shutdown noted. Stopping workers by sending a poisson pill...\n";
