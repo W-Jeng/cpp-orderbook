@@ -22,7 +22,7 @@ void signal_handler(int signal) {
 
 int main() {
     constexpr size_t NUM_WORKERS = 2;
-    constexpr size_t QUEUE_CAP = 4096;
+    constexpr size_t QUEUE_CAP = 262144;
     std::vector<std::thread> worker_threads;
     worker_threads.reserve(NUM_WORKERS);
     std::vector<Instrument> instruments = {"AAPL", "MSFT", "TSLA", "GOOG"};
