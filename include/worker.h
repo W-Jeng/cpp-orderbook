@@ -23,7 +23,7 @@ public:
         
         while (true) {
             if (_queue -> pop(cmd)) {
-                // poisson pill to break
+                // poison pill to break
                 if (cmd.type == OrderCommand::Type::SHUTDOWN)
                     break;
                 
