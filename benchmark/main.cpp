@@ -69,9 +69,10 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         }
         
-        state.ResumeTiming();
+        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
         // start benchmark
-        
+        state.ResumeTiming();
+
         for (auto& order_cmd: order_commands) {
             producer.submit(order_cmd);   
         }
@@ -93,6 +94,7 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
                 if (queue -> push(shutdown_cmd)) 
                     shutdown_message_sent.insert(i);
             }
+            std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
 
         for (auto& t: worker_threads) {
@@ -111,10 +113,10 @@ BENCHMARK(BM_BasicOrderBookInsert)
     ->Args({1'000'000, 1, 1})
     ->Args({1'000, 2, 2})
     ->Args({100'000, 2, 2})
-    ->Args({1'100'000, 2, 2})
+    ->Args({1'000'000, 2, 2})
     ->Args({1'000, 4, 12})
     ->Args({100'000, 4, 12})
-    ->Args({1'100'000, 4, 12});
+    ->Args({1'000'000, 4, 12});
 
 BENCHMARK_MAIN();
 

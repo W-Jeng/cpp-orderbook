@@ -14,14 +14,17 @@ cd ~/Documents/cpp-orderbook
 ```
 2) Create the build folder and configure with CMake:
 ```bash
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=~/Documents/vcpkg/scripts/buildsystems/vcpkg.cmake
-cmake --build build
+mkdir build
+cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Documents/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
+cmake --build .
 ```
 3) Run tests:
 ```bash
 cd build
 ./tests/all_tests   
 ```
+
 
 
 
