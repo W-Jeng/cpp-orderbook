@@ -1,5 +1,9 @@
 #include <iostream>
 #include <print>
+#include <thread>
+#include <csignal>
+#include <atomic>
+#include <unordered_set>
 #include <order.h>
 #include <orderbook.h>
 #include <id_allocator.h>
@@ -7,9 +11,6 @@
 #include <worker.h>
 #include <core.h>
 #include <order_routing_system.h>
-#include <thread>
-#include <csignal>
-#include <atomic>
 
 std::atomic<bool> shutdown_requested{false};
 
@@ -22,7 +23,7 @@ void signal_handler(int signal) {
 
 int main() {
     constexpr size_t NUM_WORKERS = 2;
-    constexpr size_t QUEUE_CAP = 800000;
+    constexpr size_t QUEUE_CAP = 1'000'000;
     std::vector<std::thread> worker_threads;
     worker_threads.reserve(NUM_WORKERS);
     std::vector<Instrument> instruments = {"AAPL", "MSFT", "TSLA", "GOOG"};
@@ -47,11 +48,10 @@ int main() {
     std::signal(SIGINT, signal_handler);
     Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
     
-    // while (!shutdown_requested.load(std::memory_order_relaxed)) {
-        // std::this_thread::sleep_for(std::chrono::milliseconds(200));   
-        // use producer to push work here, since the pushing will be completed before this loops ends, this is fine
-    // }
+    // wait for the threads to spin up
     std::this_thread::sleep_for(std::chrono::milliseconds(100));   
+    
+    // start the basic benchmark now
     using clock = std::chrono::high_resolution_clock;
     auto start = clock::now();
     
@@ -61,14 +61,22 @@ int main() {
     }
     
     std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
-    int queue_shutdown = 0;
+    std::unordered_set<int> shutdown_message_sent;
     
-    while (queue_shutdown != NUM_WORKERS) {
-        for (auto& queue: order_routing_sys.queues) {
+    // we want to make sure that all workers have been informed of the shutdown
+    while (shutdown_message_sent.size() != NUM_WORKERS) {
+        for (int i = 0; i < order_routing_sys.queues.size(); ++i) {
+            if (shutdown_message_sent.find(i) != shutdown_message_sent.end()) {
+                // we have sent the poison pill
+                continue;   
+            }
+
             OrderCommand shutdown_cmd;
             shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
-            if (queue -> push(shutdown_cmd))
-                ++queue_shutdown;
+            auto& queue = order_routing_sys.queues[i];
+
+            if (queue -> push(shutdown_cmd)) 
+                shutdown_message_sent.insert(i);
         }
     }
 
