@@ -34,7 +34,7 @@ public:
             }
         }
 
-        std::cout << "Count: " << count << "\n";
+        // std::cout << "Count: " << count << "\n";
     }
     
     bool process_command(OrderCommand& cmd) {

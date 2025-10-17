@@ -31,7 +31,7 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
     for (auto _: state) {
         state.PauseTiming();
         // ensure that the consumer loads all orders
-        constexpr size_t QUEUE_CAP = NUM_ORDERS + 1; 
+        const size_t QUEUE_CAP = NUM_ORDERS + 1; 
 
         std::vector<std::thread> worker_threads;
         worker_threads.reserve(NUM_WORKERS);
@@ -59,7 +59,7 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
             });
         }
         
-        std::signal(SIGINT, signal_handler);
+        // std::signal(SIGINT, signal_handler);
         Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
         std::vector<OrderCommand> order_commands;
         order_commands.reserve(QUEUE_CAP);
@@ -76,7 +76,7 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
             producer.submit(order_cmd);   
         }
         
-        std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
+        // std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
         std::unordered_set<int> shutdown_message_sent;
         
         while (shutdown_message_sent.size() != NUM_WORKERS) {
@@ -108,13 +108,13 @@ BENCHMARK(BM_VectorSum)->Range(8, 8 << 10);
 BENCHMARK(BM_BasicOrderBookInsert) 
     ->Args({1'000, 1, 1})
     ->Args({100'000, 1, 1})
-    ->Args({1'100'000, 1, 1})
+    ->Args({1'000'000, 1, 1})
     ->Args({1'000, 2, 2})
     ->Args({100'000, 2, 2})
     ->Args({1'100'000, 2, 2})
     ->Args({1'000, 4, 12})
     ->Args({100'000, 4, 12})
-    ->Args({1'100'000, 4, 12})
+    ->Args({1'100'000, 4, 12});
 
 BENCHMARK_MAIN();
 
