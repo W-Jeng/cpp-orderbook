@@ -70,6 +70,14 @@ public:
         _updated_time = now; 
     }
 
+    void copy_from_client(Order&& client_order, OrderId allocated_id) {
+        _instrument = std::move(client_order._instrument);
+        _side = client_order._side;
+        _price = client_order._price;
+        _quantity = client_order._quantity;
+        _id = allocated_id;
+    }
+
     void match(Quantity fill_qty) {
         if (_quantity_filled + fill_qty > _quantity) 
             throw std::runtime_error("Unable to carry add fill quantity due to it exceeds the order quantity amount");

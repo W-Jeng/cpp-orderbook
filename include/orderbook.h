@@ -8,9 +8,10 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <price_level.h>
+#include <price_level_v2.h>
 #include <order.h>
 #include <id_allocator.h>
+#include <order_pool.h>
 #include <core.h>
 
 class alignas(CACHE_LINE_SIZE) OrderBook {
@@ -21,6 +22,7 @@ public:
         _instrument(instrument),
         _id_allocator(id_allocator),
         _order_id_block(id_allocator.get_next_id_block()),
+        _order_pool(OrderPool(ORDER_REGISTRY_RESERVE)),
         _trades_completed(0)
     {
         _next_available_order_id = _order_id_block._start;
@@ -37,7 +39,8 @@ public:
 
     // returns order id
     OrderId add_order(Order& client_order) {
-        std::unique_ptr<Order> order = std::make_unique<Order>(std::move(client_order), get_order_id());
+        Order* order = _order_pool.allocate();
+        order -> copy_from_client(std::move(client_order), get_order_id());
         OrderId order_id = order -> get_id();
 
         switch (client_order.get_side()) {
@@ -55,11 +58,11 @@ public:
     }
     
     template <typename MapType>
-    void add_order_dispatcher(MapType& side_levels, std::unique_ptr<Order> order) {
+    void add_order_dispatcher(MapType& side_levels, Order* order) {
         auto [it, inserted] = side_levels.try_emplace(order -> get_price(), order -> get_price());
         PriceLevel& p_level = it -> second;
-        p_level.add_order(order.get());
-        _order_registry[order -> get_id()] = std::move(order);
+        p_level.add_order(order);
+        _order_registry[order -> get_id()] = order;
     }
 
     bool cancel_order(OrderId order_id) {
@@ -68,7 +71,7 @@ public:
         if (it == _order_registry.end()) 
             return false;
         
-        Order* order = (it->second).get();
+        Order* order = it->second;
         bool cancel_sucess = order->cancel();
         
         if (!cancel_sucess) {
@@ -118,7 +121,7 @@ public:
         if (it == _order_registry.end()) 
             return false;
         
-        Order* order = (it->second).get();
+        Order* order = it->second;
         OrderStatus status = order -> get_status();
         
         if (status == OrderStatus::CANCELLED || status == OrderStatus::FULLY_FILLED) 
@@ -270,8 +273,9 @@ private:
     const Instrument _instrument;
     std::map<Price, PriceLevel, std::greater<double>> _bids;
     std::map<Price, PriceLevel, std::less<double>> _asks;
-    std::unordered_map<OrderId, std::unique_ptr<Order>> _order_registry;
+    std::unordered_map<OrderId, Order*> _order_registry;
     IdAllocator& _id_allocator;
+    OrderPool _order_pool;
     OrderIdBlock _order_id_block;
     OrderId _next_available_order_id;
     uint64_t _trades_completed;

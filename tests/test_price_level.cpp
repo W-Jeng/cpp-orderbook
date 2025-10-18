@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <price_level.h>
+#include <price_level_v2.h>
 #include <order.h>
 
 TEST(PriceLevel, Basic) {
@@ -19,18 +19,18 @@ TEST(PriceLevel, Fill) {
     PriceLevel price_level{PRICE};
 
     Order order1{"SPY", OrderSide::BUY, PRICE, 1000};
-    Order eorder1(std::move(order1), 0);
+    Order eorder1(std::move(order1), 1);
     Order order2{"SPY", OrderSide::BUY, PRICE, 2000};
-    Order eorder2(std::move(order2), 1);
+    Order eorder2(std::move(order2), 2);
     Order order3{"SPY", OrderSide::BUY, PRICE, 300};
-    Order eorder3(std::move(order3), 2);
+    Order eorder3(std::move(order3), 3);
 
     price_level.add_order(&eorder1);
     price_level.add_order(&eorder2);
     price_level.add_order(&eorder3);
 
     Order* order = price_level.front();
-    EXPECT_EQ(order -> get_id(), 0);
+    EXPECT_EQ(order -> get_id(), 1);
 
     order -> match(100);
     price_level.pop_front_order_if_filled();
@@ -40,7 +40,7 @@ TEST(PriceLevel, Fill) {
     order -> match(900);
     EXPECT_EQ(order -> get_status(), OrderStatus::FULLY_FILLED);
     price_level.pop_front_order_if_filled();
-    EXPECT_EQ(price_level.front() -> get_id(), 1);
+    EXPECT_EQ(price_level.front() -> get_id(), 2);
     EXPECT_EQ(price_level.front() -> get_status(), OrderStatus::NEW);
 }
 
