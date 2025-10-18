@@ -22,7 +22,7 @@ public:
         _instrument(instrument),
         _id_allocator(id_allocator),
         _order_id_block(id_allocator.get_next_id_block()),
-        _order_pool(OrderPool(ORDER_REGISTRY_RESERVE)),
+        _order_pool(OrderPool{ORDER_REGISTRY_RESERVE}),
         _trades_completed(0)
     {
         _next_available_order_id = _order_id_block._start;
@@ -43,13 +43,13 @@ public:
         order -> copy_from_client(std::move(client_order), get_order_id());
         OrderId order_id = order -> get_id();
 
-        switch (client_order.get_side()) {
+        switch (order -> get_side()) {
             case OrderSide::BUY:
-                add_order_dispatcher(_bids, std::move(order));           
+                add_order_dispatcher(_bids, order);           
                 break;
                 
             case OrderSide::SELL:
-                add_order_dispatcher(_asks, std::move(order));
+                add_order_dispatcher(_asks, order);
                 break;
         }
 

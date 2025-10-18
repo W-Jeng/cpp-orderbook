@@ -2,8 +2,9 @@
 
 #include <vector>
 #include <order.h>
+#include <core.h>
 
-class OrderPool {
+class alignas(CACHE_LINE_SIZE) OrderPool {
 public:
     OrderPool(size_t reserve_size):
         _next_free_index(0),
@@ -11,6 +12,7 @@ public:
     {
         for (size_t i = 0; i < _reserve_size; ++i)
             _orders.push_back(std::make_unique<Order>());
+
     }
 
     Order* allocate() {

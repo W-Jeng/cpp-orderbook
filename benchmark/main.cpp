@@ -35,12 +35,16 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
     for (size_t i = 0; i < NUM_INSTRUMENTS; ++i)
         instruments.push_back("S" + std::to_string(i));
 
-    IdAllocator id_allocator;
-    OrderRoutingSystem order_routing_sys =
-        build_order_routing_system(instruments, id_allocator, NUM_WORKERS, QUEUE_CAP);
 
     for (auto _: state) {
         state.PauseTiming();
+        IdAllocator id_allocator;
+        OrderRoutingSystem order_routing_sys = build_order_routing_system(
+            instruments, 
+            id_allocator, 
+            NUM_WORKERS, 
+            QUEUE_CAP
+        );
         std::atomic<size_t> workers_ready{0};
         std::vector<std::thread> worker_threads;
 

@@ -5,7 +5,7 @@
 #include <core.h>
 #include <atomic>
 
-struct OrderIdBlock{
+struct alignas(CACHE_LINE_SIZE) OrderIdBlock{
     OrderId _start;
     OrderId _end;
     
@@ -16,7 +16,7 @@ struct OrderIdBlock{
 };
 
 // the idea is to allocate the thread id in blocks so we can reduce the fetch add for multithreaded (less contention)
-class IdAllocator {
+class alignas(CACHE_LINE_SIZE) IdAllocator {
 public:
     static constexpr OrderId DEFAULT_BLOCK_SIZE = 1'000'000;
 

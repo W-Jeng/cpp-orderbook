@@ -7,12 +7,13 @@
 #include <worker.h>
 #include <spsc_queue.h>
 #include <id_allocator.h>
+#include <core.h>
 
 // the key idea is to keep track of [worker_index1] -> {instrument1, instrument2,... }
 // then the router is to route to the right worker_index based on the instrument
 // finally the queue is shared by consumer (given raw ptr from unique ptr) and producer (where this gets the unique ptr)
 
-struct OrderRoutingSystem {
+struct alignas(CACHE_LINE_SIZE) OrderRoutingSystem {
     std::vector<std::vector<OrderBook>> worker_orderbooks;
     std::unordered_map<Instrument, size_t> instrument_to_worker;
     std::vector<std::unique_ptr<SPSCQueue<OrderCommand>>> queues;

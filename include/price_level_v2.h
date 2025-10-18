@@ -20,7 +20,7 @@ struct OrderEntry{
     {}
 };
 
-class PriceLevel {
+class alignas(CACHE_LINE_SIZE) PriceLevel {
 public:
     using OrderEntries = std::vector<OrderEntry>;
     static constexpr size_t ORDER_ENTRY_RESERVE = 1'048'576;
