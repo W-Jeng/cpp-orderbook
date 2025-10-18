@@ -23,8 +23,8 @@ void signal_handler(int signal) {
 
 int main() {
     const size_t NUM_ORDERS = 1'000'000;
-    const size_t NUM_WORKERS = 2;
-    const size_t NUM_INSTRUMENTS = 2;
+    const size_t NUM_WORKERS = 4;
+    const size_t NUM_INSTRUMENTS = 4;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 1; 
@@ -65,7 +65,7 @@ int main() {
         order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
     }
     
-    // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     // start the basic benchmark now
     using clock = std::chrono::high_resolution_clock;
     auto start = clock::now();
