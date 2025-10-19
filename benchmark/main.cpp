@@ -77,7 +77,7 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
         state.ResumeTiming();
 
         for (auto& order_cmd : order_commands)
-            producer.submit(order_cmd);
+            producer.submit(std::move(order_cmd));
 
         // Send poison pills after benchmarking
         while (shutdown_message_sent.size() != NUM_WORKERS) {

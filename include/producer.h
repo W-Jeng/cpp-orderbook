@@ -25,6 +25,16 @@ public:
         size_t q_idx = it -> second;
         return _queues[q_idx].push(cmd);
     }
+
+    bool submit(OrderCommand&& cmd) {
+        auto it = _route_map.find(cmd.order.get_instrument());
+        
+        if (it == _route_map.end())
+            return false;
+            
+        size_t q_idx = it -> second;
+        return _queues[q_idx].push(std::move(cmd));
+    }
     
 private:
     SPSCQueues& _queues;

@@ -36,23 +36,41 @@ public:
     }
 
     bool push(const T& item) noexcept {
-        size_t next = (_head + 1) % _buffer.size();
-        
-        if (next == _tail) 
+        size_t head = _head.load(std::memory_order_relaxed);
+        size_t next = (head + 1) % _buffer.size();
+        size_t tail = _tail.load(std::memory_order_acquire);
+
+        if (next == tail)
             return false;
-            
-        _buffer[_head] = item;
-        _head = next;
+
+        _buffer[head] = item;
+        _head.store(next, std::memory_order_release);
+        return true;
+    }
+
+    bool push(T&& item) noexcept {
+        size_t head = _head.load(std::memory_order_relaxed);
+        size_t next = (head + 1) % _buffer.size();
+        size_t tail = _tail.load(std::memory_order_acquire);
+
+        if (next == tail)
+            return false;
+
+        _buffer[head] = std::move(item);
+        _head.store(next, std::memory_order_release);
         return true;
     }
     
     bool pop(T& item) {
-        if (_tail == _head)
+        size_t tail = _tail.load(std::memory_order_relaxed);
+        size_t head = _head.load(std::memory_order_acquire);
+
+        if (tail == head)
             return false;
-            
-        item = _buffer[_tail];
-        _tail = (_tail + 1) % _buffer.size();
-        return true; 
+
+        item = std::move(_buffer[tail]);
+        _tail.store((tail+1) % _buffer.size(), std::memory_order_release);
+        return true;
     }
 
 private:

@@ -23,8 +23,8 @@ void signal_handler(int signal) {
 
 int main() {
     const size_t NUM_ORDERS = 1'000'000;
-    const size_t NUM_WORKERS = 4;
-    const size_t NUM_INSTRUMENTS = 4;
+    const size_t NUM_WORKERS = 1;
+    const size_t NUM_INSTRUMENTS = 1;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 1; 
@@ -45,17 +45,6 @@ int main() {
         QUEUE_CAP
     );
     
-    for (size_t i = 0; i < NUM_WORKERS; ++i) {
-        worker_threads.emplace_back([&, i]() mutable {
-            Worker worker(
-                &order_routing_sys.queues[i], 
-                std::move(order_routing_sys.worker_orderbooks[i])
-            );
-            worker.run();
-        });
-    }
-    
-    std::signal(SIGINT, signal_handler);
     Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
@@ -65,40 +54,27 @@ int main() {
         order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
     }
     
-    // wait for threads to start
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    for (auto& order_cmd: order_commands) {
+        producer.submit(std::move(order_cmd));   
+    }
+
+    OrderCommand shutdown_cmd;
+    shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
+    auto& queue = order_routing_sys.queues[0];
+    producer.submit(std::move(shutdown_cmd));
 
     // start the basic benchmark now
     using clock = std::chrono::high_resolution_clock;
     auto start = clock::now();
 
-    for (auto& order_cmd: order_commands) {
-        producer.submit(std::move(order_cmd));   
-    }
-    
-    // std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
-    std::unordered_set<int> shutdown_message_sent;
-    
-    while (shutdown_message_sent.size() != NUM_WORKERS) {
-        for (int i = 0; i < order_routing_sys.queues.size(); ++i) {
-            if (shutdown_message_sent.find(i) != shutdown_message_sent.end()) {
-                // we have sent the poison pill
-                continue;   
-            }
-
-            OrderCommand shutdown_cmd;
-            shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
-            auto& queue = order_routing_sys.queues[i];
-
-            if (queue.push(shutdown_cmd)) 
-                shutdown_message_sent.insert(i);
-        }
-    }
-
-    for (auto& t: worker_threads) {
-        if (t.joinable())
-            t.join();
-    }
+    std::cout << "here!\n";
+    Worker worker(
+        &order_routing_sys.queues[0],
+        std::move(order_routing_sys.worker_orderbooks[0])    
+    );
+    std::cout << "done init worker!\n";
+    worker.run();
+    std::cout << "done run worker!\n";
 
     auto end = clock::now();
     std::chrono::duration<double> elapsed = end - start;
