@@ -11,12 +11,12 @@
 
 // the key idea is to keep track of [worker_index1] -> {instrument1, instrument2,... }
 // then the router is to route to the right worker_index based on the instrument
-// finally the queue is shared by consumer (given raw ptr from unique ptr) and producer (where this gets the unique ptr)
+// finally the queue is shared by consumer and producer 
 
 struct alignas(CACHE_LINE_SIZE) OrderRoutingSystem {
     std::vector<std::vector<OrderBook>> worker_orderbooks;
     std::unordered_map<Instrument, size_t> instrument_to_worker;
-    std::vector<std::unique_ptr<SPSCQueue<OrderCommand>>> queues;
+    std::vector<SPSCQueue<OrderCommand>> queues;
 };
 
 OrderRoutingSystem build_order_routing_system(
@@ -39,7 +39,7 @@ OrderRoutingSystem build_order_routing_system(
     }
     
     for (size_t i = 0; i < num_workers; ++i) {
-        order_routing_sys.queues.emplace_back(std::make_unique<SPSCQueue<OrderCommand>>(queue_cap));
+        order_routing_sys.queues.emplace_back(queue_cap);
     }
     
     return order_routing_sys;

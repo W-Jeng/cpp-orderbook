@@ -48,14 +48,14 @@ int main() {
     for (size_t i = 0; i < NUM_WORKERS; ++i) {
         worker_threads.emplace_back([&, i]() mutable {
             Worker worker(
-                order_routing_sys.queues[i].get(), 
+                &order_routing_sys.queues[i], 
                 std::move(order_routing_sys.worker_orderbooks[i])
             );
             worker.run();
         });
     }
     
-    // std::signal(SIGINT, signal_handler);
+    std::signal(SIGINT, signal_handler);
     Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
@@ -65,7 +65,9 @@ int main() {
         order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
     }
     
+    // wait for threads to start
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
     // start the basic benchmark now
     using clock = std::chrono::high_resolution_clock;
     auto start = clock::now();
@@ -88,10 +90,9 @@ int main() {
             shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
             auto& queue = order_routing_sys.queues[i];
 
-            if (queue -> push(shutdown_cmd)) 
+            if (queue.push(shutdown_cmd)) 
                 shutdown_message_sent.insert(i);
         }
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
 
     for (auto& t: worker_threads) {

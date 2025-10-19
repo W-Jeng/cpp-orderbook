@@ -9,7 +9,7 @@
 
 class Producer {
 public:
-    using SPSCQueues = std::vector<std::unique_ptr<SPSCQueue<OrderCommand>>>;
+    using SPSCQueues = std::vector<SPSCQueue<OrderCommand>>;
 
     Producer(SPSCQueues& queues, const std::unordered_map<Instrument, size_t>& route_map):
         _queues(queues),
@@ -23,7 +23,7 @@ public:
             return false;
             
         size_t q_idx = it -> second;
-        return _queues[q_idx] -> push(cmd);
+        return _queues[q_idx].push(cmd);
     }
     
 private:

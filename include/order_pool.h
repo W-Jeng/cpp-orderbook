@@ -6,32 +6,30 @@
 
 class alignas(CACHE_LINE_SIZE) OrderPool {
 public:
-    OrderPool(size_t reserve_size):
-        _next_free_index(0),
-        _reserve_size(reserve_size)
+    explicit OrderPool(size_t reserve_size)
+        : _next_free_index(0)
     {
-        for (size_t i = 0; i < _reserve_size; ++i)
-            _orders.push_back(std::make_unique<Order>());
+        _orders.reserve(reserve_size);
 
+        for (size_t i = 0; i < reserve_size; ++i)
+            _orders.emplace_back(); 
     }
 
     Order* allocate() {
         if (_next_free_index >= _orders.size())
             reserve_more();
 
-        return _orders[_next_free_index++].get();
+        return &_orders[_next_free_index++];
     }
 
 private:
-    const size_t _reserve_size;
     size_t _next_free_index;
-    std::vector<std::unique_ptr<Order>> _orders;
+    std::vector<Order> _orders;
 
     void reserve_more() {
-        size_t elements_to_add = _orders.size();
-        _orders.reserve(_orders.size() * 2);
-
-        for (size_t i = 0; i < elements_to_add; ++i)
-            _orders.push_back(std::make_unique<Order>());
+        size_t old_size = _orders.size();
+        _orders.reserve(old_size * 2);
+        for (size_t i = 0; i < old_size; ++i)
+            _orders.emplace_back();
     }
 };

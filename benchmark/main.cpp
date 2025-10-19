@@ -51,7 +51,7 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
         for (size_t i = 0; i < NUM_WORKERS; ++i) {
             worker_threads.emplace_back([&, i]() mutable {
                 Worker worker(
-                    order_routing_sys.queues[i].get(),
+                    &order_routing_sys.queues[i],
                     std::move(order_routing_sys.worker_orderbooks[i])
                 );
                 workers_ready.fetch_add(1, std::memory_order_release);
@@ -89,11 +89,9 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
                 shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
                 auto& queue = order_routing_sys.queues[i];
 
-                if (queue->push(shutdown_cmd))
+                if (queue.push(shutdown_cmd))
                     shutdown_message_sent.insert(i);
             }
-
-            std::this_thread::yield();
         }
 
         for (auto& t : worker_threads) {
@@ -102,7 +100,6 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
         }
         state.PauseTiming();
     }
-
 }
 
 
