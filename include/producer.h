@@ -19,7 +19,7 @@ public:
     bool submit(const OrderCommand& cmd) {
         auto it = _route_map.find(cmd.order.get_instrument());
         
-        if (it == _route_map.end())
+        if (it == _route_map.end() && cmd.type != OrderCommand::Type::SHUTDOWN)
             return false;
             
         size_t q_idx = it -> second;
@@ -29,9 +29,10 @@ public:
     bool submit(OrderCommand&& cmd) {
         auto it = _route_map.find(cmd.order.get_instrument());
         
-        if (it == _route_map.end())
+        if (it == _route_map.end() && cmd.type != OrderCommand::Type::SHUTDOWN) {
             return false;
-            
+        }
+
         size_t q_idx = it -> second;
         return _queues[q_idx].push(std::move(cmd));
     }

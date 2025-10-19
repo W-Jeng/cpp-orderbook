@@ -23,8 +23,8 @@ void signal_handler(int signal) {
 
 int main() {
     const size_t NUM_ORDERS = 1'000'000;
-    const size_t NUM_WORKERS = 4;
-    const size_t NUM_INSTRUMENTS = 4;
+    const size_t NUM_WORKERS = 1;
+    const size_t NUM_INSTRUMENTS = 1;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 1; 
@@ -93,6 +93,7 @@ int main() {
             if (queue.push(shutdown_cmd)) 
                 shutdown_message_sent.insert(i);
         }
+        std::this_thread::yield();
     }
 
     for (auto& t: worker_threads) {

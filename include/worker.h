@@ -25,6 +25,7 @@ public:
         while (true) {
             if (_queue -> pop(cmd)) {
                 // poison pill to break
+
                 if (cmd.type == OrderCommand::Type::SHUTDOWN)
                     break;
                 

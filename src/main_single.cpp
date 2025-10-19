@@ -27,7 +27,7 @@ int main() {
     const size_t NUM_INSTRUMENTS = 1;
     
     // ensure that the consumer loads all orders
-    const size_t QUEUE_CAP = NUM_ORDERS + 1; 
+    const size_t QUEUE_CAP = NUM_ORDERS + 2; 
 
     std::vector<std::thread> worker_threads;
     worker_threads.reserve(NUM_WORKERS);
@@ -54,27 +54,23 @@ int main() {
         order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
     }
     
-    for (auto& order_cmd: order_commands) {
-        producer.submit(std::move(order_cmd));   
-    }
-
-    OrderCommand shutdown_cmd;
-    shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
-    auto& queue = order_routing_sys.queues[0];
-    producer.submit(std::move(shutdown_cmd));
+    OrderCommand shutdown_cmd{OrderCommand::Type::SHUTDOWN, Order{"S0"}};
+    order_commands.push_back(shutdown_cmd);
 
     // start the basic benchmark now
     using clock = std::chrono::high_resolution_clock;
     auto start = clock::now();
 
-    std::cout << "here!\n";
+    for (auto& order_cmd: order_commands) {
+        producer.submit(std::move(order_cmd));   
+    }
+
+
     Worker worker(
         &order_routing_sys.queues[0],
         std::move(order_routing_sys.worker_orderbooks[0])    
     );
-    std::cout << "done init worker!\n";
     worker.run();
-    std::cout << "done run worker!\n";
 
     auto end = clock::now();
     std::chrono::duration<double> elapsed = end - start;

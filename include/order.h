@@ -40,6 +40,20 @@ public:
         _updated_time = now; 
     }
     
+    Order(Instrument instrument):
+        _instrument(std::move(instrument)),
+        _side(OrderSide::BUY),
+        _price(0.0),
+        _quantity(0),
+        _id(DEFAULT_ORDER_ID),
+        _quantity_filled(0),
+        _status(OrderStatus::NEW)
+    {
+        TimePoint now = std::chrono::system_clock::now();
+        _time_submitted = now;
+        _updated_time = now; 
+    }
+
     // information received from client
     Order(Instrument instrument, OrderSide side, Price price, Quantity quantity):
         _instrument(std::move(instrument)),
