@@ -58,18 +58,17 @@ int main() {
     order_commands.push_back(shutdown_cmd);
 
     // start the basic benchmark now
-    using clock = std::chrono::high_resolution_clock;
-    auto start = clock::now();
-
     for (auto& order_cmd: order_commands) {
         producer.submit(std::move(order_cmd));   
     }
-
 
     Worker worker(
         &order_routing_sys.queues[0],
         std::move(order_routing_sys.worker_orderbooks[0])    
     );
+
+    using clock = std::chrono::high_resolution_clock;
+    auto start = clock::now();
     worker.run();
 
     auto end = clock::now();

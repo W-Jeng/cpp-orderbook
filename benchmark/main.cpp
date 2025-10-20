@@ -23,11 +23,64 @@ static void BM_VectorSum(benchmark::State& state) {
     state.SetItemsProcessed(state.iterations() * state.range(0));
 }
 
+static void BM_SingleThreadedOrderBookInsert(benchmark::State& state) {
+    const size_t NUM_ORDERS = state.range(0);
+    const size_t NUM_INSTRUMENTS = state.range(1);
+    const size_t NUM_WORKERS = 1;
+    
+    // ensure that the consumer loads all orders
+    const size_t QUEUE_CAP = NUM_ORDERS + 2; 
+
+    for (auto _: state) {
+        state.PauseTiming();
+        std::vector<Instrument> instruments;
+        
+        for (size_t i = 0; i < NUM_INSTRUMENTS; ++i) {
+            instruments.push_back("S" + std::to_string(i));
+        }
+        
+        IdAllocator id_allocator;
+        OrderRoutingSystem order_routing_sys = build_order_routing_system(
+            instruments,
+            id_allocator,
+            NUM_WORKERS,
+            QUEUE_CAP
+        );
+        
+        Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
+        std::vector<OrderCommand> order_commands;
+        order_commands.reserve(QUEUE_CAP);
+        
+        for (int i = 0; i < NUM_ORDERS; ++i) {
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, 100.01, 200};
+            order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        }
+        
+        for (auto& order_cmd: order_commands) {
+            producer.submit(std::move(order_cmd));   
+        }
+
+        OrderCommand shutdown_cmd;
+        shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
+        auto& queue = order_routing_sys.queues[0];
+        queue.push(shutdown_cmd);
+        Worker worker(
+            &order_routing_sys.queues[0],
+            std::move(order_routing_sys.worker_orderbooks[0])    
+        );
+
+        using clock = std::chrono::high_resolution_clock;
+        state.ResumeTiming();
+        worker.run();
+        state.PauseTiming();
+    }
+}
+
 static void BM_BasicOrderBookInsert(benchmark::State& state) {
     const size_t NUM_ORDERS = state.range(0);
     const size_t NUM_WORKERS = state.range(1);
     const size_t NUM_INSTRUMENTS = state.range(2);
-    const size_t QUEUE_CAP = NUM_ORDERS + 1;
+    const size_t QUEUE_CAP = NUM_ORDERS + 2;
 
     std::vector<Instrument> instruments;
     instruments.reserve(NUM_INSTRUMENTS);
@@ -48,16 +101,6 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
         std::atomic<size_t> workers_ready{0};
         std::vector<std::thread> worker_threads;
 
-        for (size_t i = 0; i < NUM_WORKERS; ++i) {
-            worker_threads.emplace_back([&, i]() mutable {
-                Worker worker(
-                    &order_routing_sys.queues[i],
-                    std::move(order_routing_sys.worker_orderbooks[i])
-                );
-                workers_ready.fetch_add(1, std::memory_order_release);
-                worker.run();
-            });
-        }
 
         Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
         std::vector<OrderCommand> order_commands;
@@ -70,15 +113,25 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
         }
 
         // busy wait until all ready
-        while (workers_ready.load(std::memory_order_acquire) != NUM_WORKERS) {
-            std::this_thread::yield();
-        }
-
-        state.ResumeTiming();
-
         for (auto& order_cmd : order_commands)
             producer.submit(std::move(order_cmd));
 
+        for (size_t i = 0; i < NUM_WORKERS; ++i) {
+            worker_threads.emplace_back([&, i]() mutable {
+                Worker worker(
+                    &order_routing_sys.queues[i],
+                    std::move(order_routing_sys.worker_orderbooks[i])
+                );
+                workers_ready.fetch_add(1, std::memory_order_release);
+                worker.run();
+            });
+        }
+
+        while (workers_ready.load(std::memory_order_acquire) != NUM_WORKERS) {
+            continue;
+        }
+
+        state.ResumeTiming();
         // Send poison pills after benchmarking
         while (shutdown_message_sent.size() != NUM_WORKERS) {
             for (int i = 0; i < order_routing_sys.queues.size(); ++i) {
@@ -103,17 +156,21 @@ static void BM_BasicOrderBookInsert(benchmark::State& state) {
 }
 
 
-// BENCHMARK(BM_VectorSum)->Range(8, 8 << 10);
-BENCHMARK(BM_BasicOrderBookInsert) 
-    ->Args({1'000, 1, 1})
-    ->Args({100'000, 1, 1})
-    ->Args({1'000'000, 1, 1})
-    ->Args({1'000, 2, 2})
-    ->Args({100'000, 2, 2})
-    ->Args({1'000'000, 2, 2})
-    ->Args({1'000, 4, 4})
-    ->Args({100'000, 4, 4})
-    ->Args({1'000'000, 4, 4});
+// BENCHMARK(BM_BasicOrderBookInsert) 
+//     ->Args({1'000, 1, 1})
+//     ->Args({100'000, 1, 1})
+//     ->Args({1'000'000, 1, 1})
+//     ->Args({1'000, 2, 2})
+//     ->Args({100'000, 2, 2})
+//     ->Args({1'000'000, 2, 2})
+//     ->Args({1'000, 4, 4})
+//     ->Args({100'000, 4, 4})
+//     ->Args({1'000'000, 4, 4});
+
+BENCHMARK(BM_SingleThreadedOrderBookInsert) 
+    ->Args({1'000, 1})
+    ->Args({100'000, 1})
+    ->Args({1'000'000, 1});
 
 BENCHMARK_MAIN();
 

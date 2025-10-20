@@ -11,6 +11,8 @@
 #include <worker.h>
 #include <core.h>
 #include <order_routing_system.h>
+#include <pthread.h>
+#include <sched.h>
 
 std::atomic<bool> shutdown_requested{false};
 
@@ -19,6 +21,13 @@ void signal_handler(int signal) {
         shutdown_requested.store(true);
         std::cout << "\nReceived Ctrl+C, shutting down....\n";
     }
+}
+
+void pin_to_core(int core_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(core_id, &cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 }
 
 int main() {
@@ -47,6 +56,7 @@ int main() {
     
     for (size_t i = 0; i < NUM_WORKERS; ++i) {
         worker_threads.emplace_back([&, i]() mutable {
+            pin_to_core(i);
             Worker worker(
                 &order_routing_sys.queues[i], 
                 std::move(order_routing_sys.worker_orderbooks[i])
@@ -75,10 +85,16 @@ int main() {
     for (auto& order_cmd: order_commands) {
         producer.submit(std::move(order_cmd));   
     }
+
+    auto prod_end = clock::now();
+    std::chrono::duration<double> elapsed_prod_submit = prod_end - start;
+    std::cout << "Elapsed time (Producer submit): " << elapsed_prod_submit.count() << " seconds\n";
     
     // std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
     std::unordered_set<int> shutdown_message_sent;
     
+    auto start_submit_shutdown = clock::now();
+
     while (shutdown_message_sent.size() != NUM_WORKERS) {
         for (int i = 0; i < order_routing_sys.queues.size(); ++i) {
             if (shutdown_message_sent.find(i) != shutdown_message_sent.end()) {
@@ -96,6 +112,10 @@ int main() {
         std::this_thread::yield();
     }
 
+    auto end_submit_shutdown = clock::now();
+    std::chrono::duration<double> elapsed_submit_shutdown = end_submit_shutdown - start_submit_shutdown;
+    std::cout << "Elapsed time (submit shutdown): " << elapsed_submit_shutdown.count() << " seconds\n";
+
     for (auto& t: worker_threads) {
         if (t.joinable())
             t.join();
@@ -103,7 +123,7 @@ int main() {
 
     auto end = clock::now();
     std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
+    std::cout << "Total Elapsed time: " << elapsed.count() << " seconds\n";
     std::cout << "All workers stopped cleanly.\n";
     return 0;
 }

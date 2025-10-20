@@ -24,6 +24,8 @@ class alignas(CACHE_LINE_SIZE) PriceLevel {
 public:
     using OrderEntries = std::vector<OrderEntry>;
     static constexpr size_t ORDER_ENTRY_RESERVE = 1'048'576;
+    std::chrono::duration<double> elapsed;
+    using clock = std::chrono::high_resolution_clock;
 
     PriceLevel(Price price):
         _price(price),
@@ -33,9 +35,16 @@ public:
     }
 
     void add_order(Order* order) {
+        auto start = clock::now();
         const OrderId order_id = order -> get_id();
         _order_entries.push_back(OrderEntry(order));
         _orders_map[order_id] = _order_entries.size()-1;
+        auto end = clock::now();
+        elapsed += end-start;
+    }
+
+    void print_time() {
+        std::cout << "Elapsed time (count) in Price Level Add: " << elapsed.count() << "\n";
     }
 
     bool remove_order(OrderId order_id) {

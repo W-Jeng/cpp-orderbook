@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <chrono>
 #include <price_level_v2.h>
 #include <order.h>
 #include <id_allocator.h>
@@ -17,13 +18,16 @@
 class alignas(CACHE_LINE_SIZE) OrderBook {
 public:
     inline static constexpr size_t ORDER_REGISTRY_RESERVE = 1'000'000;
+    std::chrono::duration<double> elapsed;
+    using clock = std::chrono::high_resolution_clock;
 
     explicit OrderBook(const Instrument& instrument, IdAllocator& id_allocator): 
         _instrument(instrument),
         _id_allocator(id_allocator),
         _order_id_block(id_allocator.get_next_id_block()),
         _order_pool(OrderPool{ORDER_REGISTRY_RESERVE}),
-        _trades_completed(0)
+        _trades_completed(0),
+        _try_match_flag(false)
     {
         _next_available_order_id = _order_id_block._start;
         _order_registry.reserve(ORDER_REGISTRY_RESERVE);
@@ -57,12 +61,30 @@ public:
         return order_id;
     }
     
+    void print_time() {
+        std::cout << "Elapsed time (count) in Orderbook Add: " << elapsed.count() << "\n";
+
+        for (auto& [p, price_level]: _bids) {
+            std::cout << "Bid Price info: " << p << ", ";
+            price_level.print_time();
+        }
+        for (auto& [p, price_level]: _asks) {
+            std::cout << "Ask Price info: " << p << ", ";
+            price_level.print_time();
+        }
+    }
+
     template <typename MapType>
     void add_order_dispatcher(MapType& side_levels, Order* order) {
         auto [it, inserted] = side_levels.try_emplace(order -> get_price(), order -> get_price());
+        _try_match_flag = inserted;
         PriceLevel& p_level = it -> second;
+
+        auto start = clock::now();
         p_level.add_order(order);
         _order_registry[order -> get_id()] = order;
+        auto end = clock::now();
+        elapsed += end-start;
     }
 
     bool cancel_order(OrderId order_id) {
@@ -162,6 +184,7 @@ public:
             old_price_level.remove_order(order -> get_id());   
             order -> set_price(new_price);
             auto [it, inserted] = side_levels.try_emplace(new_price, new_price);
+            _try_match_flag = inserted;
             PriceLevel& new_price_level = it -> second;
             new_price_level.add_order(order);
         }
@@ -188,6 +211,9 @@ public:
     }
     
     bool try_match() {
+        if (!_try_match_flag) 
+            return false;
+
         bool order_matched = false;
         
         while (true) {
@@ -201,6 +227,7 @@ public:
             bool match = (bid_it -> first) >= (ask_it -> first);
             
             if (!match) {
+                _try_match_flag = false;
                 return order_matched;
             }
             
@@ -219,6 +246,7 @@ public:
             remove_price_level_if_empty(_asks, ask_it);
         }
         
+        _try_match_flag = false;
         return order_matched;
     }
     
@@ -279,6 +307,7 @@ private:
     OrderIdBlock _order_id_block;
     OrderId _next_available_order_id;
     uint64_t _trades_completed;
+    bool _try_match_flag;
 };
 
 inline std::string price_to_string(double p, int precision = 2) {

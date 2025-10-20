@@ -21,7 +21,9 @@ public:
     void run() {
         OrderCommand cmd{};
         int count = 0;
-
+        using clock = std::chrono::high_resolution_clock;
+        std::chrono::duration<double> elapsed;
+        
         while (true) {
             if (_queue -> pop(cmd)) {
                 // poison pill to break
@@ -31,8 +33,17 @@ public:
                 
                 ++count;
                 // currently, we only hand those that are successful
+                auto start = clock::now();
                 process_command(cmd);
+                auto end = clock::now();
+                elapsed += (end-start);
             }
+        }
+        std::cout << "Total elapsed time in worker: " <<  elapsed.count() << " seconds, count: " << count << "\n";
+
+        for (auto& [instrument, ob]: _books) {
+            std::cout << "Instrument: " << instrument << ", ";
+            ob.print_time();
         }
     }
     
