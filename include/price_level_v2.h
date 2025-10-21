@@ -36,9 +36,9 @@ public:
     }
 
     void add_order(Order* order) {
-        auto start = clock::now();
         const OrderId order_id = order -> get_id();
         _order_entries.push_back(OrderEntry(order));
+        auto start = clock::now();
         _orders_map[order_id] = _order_entries.size()-1;
         auto end = clock::now();
         elapsed += end-start;

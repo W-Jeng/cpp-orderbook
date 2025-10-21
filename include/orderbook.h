@@ -82,9 +82,9 @@ public:
 
         auto start = clock::now();
         p_level.add_order(order);
-        _order_registry[order -> get_id()] = order;
         auto end = clock::now();
         elapsed += end-start;
+        _order_registry[order -> get_id()] = order;
     }
 
     bool cancel_order(OrderId order_id) {
