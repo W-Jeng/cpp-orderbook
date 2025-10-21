@@ -32,6 +32,7 @@ public:
         _queue_head_index(0)
     {
         _order_entries.reserve(ORDER_ENTRY_RESERVE);
+        _orders_map.reserve(ORDER_ENTRY_RESERVE);
     }
 
     void add_order(Order* order) {
