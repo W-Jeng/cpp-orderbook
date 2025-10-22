@@ -54,24 +54,19 @@ int main() {
         QUEUE_CAP
     );
     
-    // prepare cache-line-aligned counters to observe distribution (avoid false sharing)
-    std::vector<AlignedCounter> push_counters(NUM_WORKERS);
-    std::vector<AlignedCounter> processed_counters(NUM_WORKERS);
-
     for (size_t i = 0; i < NUM_WORKERS; ++i) {
         worker_threads.emplace_back([&, i]() mutable {
             pin_to_core(i);
             Worker worker(
                 &order_routing_sys.queues[i], 
-                std::move(order_routing_sys.worker_orderbooks[i]),
-                &processed_counters[i].v
+                std::move(order_routing_sys.worker_orderbooks[i])
             );
             worker.run();
         });
     }
     
     std::signal(SIGINT, signal_handler);
-    Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker, &push_counters);
+    Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
     
@@ -129,9 +124,6 @@ int main() {
     auto end = clock::now();
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Total Elapsed time: " << elapsed.count() << " seconds\n";
-    for (size_t i = 0; i < NUM_WORKERS; ++i) {
-        std::cout << "Queue " << i << " pushed: " << push_counters[i].v.load() << ", processed: " << processed_counters[i].v.load() << "\n";
-    }
     std::cout << "All workers stopped cleanly.\n";
     return 0;
 }
