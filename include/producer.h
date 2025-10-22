@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <core.h>
 
-class Producer {
+class alignas(CACHE_LINE_SIZE) Producer {
 public:
     using SPSCQueues = std::vector<SPSCQueue<OrderCommand>>;
 

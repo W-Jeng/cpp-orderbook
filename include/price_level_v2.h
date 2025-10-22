@@ -33,17 +33,17 @@ public:
         _queue_head_index(0)
     {
         _order_entries.reserve(ORDER_ENTRY_RESERVE);
-        _orders_map.reserve(ORDER_ENTRY_RESERVE);
-        boost::unordered_flat_map<int, std::string> id_to_name;
+        _orders_map.reserve(ORDER_ENTRY_RESERVE * 1.5);
+        // boost::unordered_flat_map<int, std::string> id_to_name;
     }
 
     void add_order(Order* order) {
         const OrderId order_id = order -> get_id();
         _order_entries.push_back(OrderEntry(order));
-        auto start = clock::now();
+        // auto start = clock::now();
         _orders_map[order_id] = _order_entries.size()-1;
-        auto end = clock::now();
-        elapsed += end-start;
+        // auto end = clock::now();
+        // elapsed += end-start;
     }
 
     void print_time() {
@@ -128,7 +128,7 @@ private:
     const Price _price;
     OrderEntries _order_entries;
     size_t _queue_head_index;
-    std::unordered_map<OrderId, size_t> _orders_map;
+    boost::unordered_flat_map<OrderId, size_t> _orders_map;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const PriceLevel& price_level) {

@@ -14,6 +14,7 @@
 #include <id_allocator.h>
 #include <order_pool.h>
 #include <core.h>
+#include <boost/unordered/unordered_flat_map.hpp>
 
 class alignas(CACHE_LINE_SIZE) OrderBook {
 public:
@@ -30,7 +31,7 @@ public:
         _try_match_flag(false)
     {
         _next_available_order_id = _order_id_block._start;
-        _order_registry.reserve(ORDER_REGISTRY_RESERVE);
+        _order_registry.reserve(ORDER_REGISTRY_RESERVE*2);
     }
     
     // explicitly allow moving
@@ -80,10 +81,10 @@ public:
         _try_match_flag = inserted;
         PriceLevel& p_level = it -> second;
 
-        auto start = clock::now();
+        // auto start = clock::now();
         p_level.add_order(order);
-        auto end = clock::now();
-        elapsed += end-start;
+        // auto end = clock::now();
+        // elapsed += end-start;
         _order_registry[order -> get_id()] = order;
     }
 
@@ -301,7 +302,7 @@ private:
     const Instrument _instrument;
     std::map<Price, PriceLevel, std::greater<double>> _bids;
     std::map<Price, PriceLevel, std::less<double>> _asks;
-    std::unordered_map<OrderId, Order*> _order_registry;
+    boost::unordered_flat_map<OrderId, Order*> _order_registry;
     IdAllocator& _id_allocator;
     OrderPool _order_pool;
     OrderIdBlock _order_id_block;
