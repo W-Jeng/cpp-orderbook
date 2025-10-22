@@ -24,6 +24,10 @@ cmake --build .
 cd build
 ./tests/all_tests   
 ```
+4) For performance
+```base
+sudo sysctl -w kernel.perf_event_paranoid=-1
+```
 
 
 

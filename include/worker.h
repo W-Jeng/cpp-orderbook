@@ -33,18 +33,18 @@ public:
                 
                 ++count;
                 // currently, we only hand those that are successful
-                auto start = clock::now();
+                // auto start = clock::now();
                 process_command(cmd);
-                auto end = clock::now();
-                elapsed += (end-start);
+                // auto end = clock::now();
+                // elapsed += (end-start);
             }
         }
-        std::cout << "Total elapsed time in worker: " <<  elapsed.count() << " seconds, count: " << count << "\n";
+        // std::cout << "Total elapsed time in worker: " <<  elapsed.count() << " seconds, count: " << count << "\n";
 
-        for (auto& [instrument, ob]: _books) {
-            std::cout << "Instrument: " << instrument << ", ";
-            ob.print_time();
-        }
+        // for (auto& [instrument, ob]: _books) {
+        //     std::cout << "Instrument: " << instrument << ", ";
+        //     ob.print_time();
+        // }
     }
     
     bool process_command(OrderCommand& cmd) {

@@ -32,8 +32,8 @@ void pin_to_core(int core_id) {
 
 int main() {
     const size_t NUM_ORDERS = 1'000'000;
-    const size_t NUM_WORKERS = 2;
-    const size_t NUM_INSTRUMENTS = 2;
+    const size_t NUM_WORKERS = 4;
+    const size_t NUM_INSTRUMENTS = 4;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 2; 
@@ -54,19 +54,24 @@ int main() {
         QUEUE_CAP
     );
     
+    // prepare cache-line-aligned counters to observe distribution (avoid false sharing)
+    std::vector<AlignedCounter> push_counters(NUM_WORKERS);
+    std::vector<AlignedCounter> processed_counters(NUM_WORKERS);
+
     for (size_t i = 0; i < NUM_WORKERS; ++i) {
         worker_threads.emplace_back([&, i]() mutable {
             pin_to_core(i);
             Worker worker(
                 &order_routing_sys.queues[i], 
-                std::move(order_routing_sys.worker_orderbooks[i])
+                std::move(order_routing_sys.worker_orderbooks[i]),
+                &processed_counters[i].v
             );
             worker.run();
         });
     }
     
     std::signal(SIGINT, signal_handler);
-    Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
+    Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker, &push_counters);
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
     
@@ -124,6 +129,9 @@ int main() {
     auto end = clock::now();
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Total Elapsed time: " << elapsed.count() << " seconds\n";
+    for (size_t i = 0; i < NUM_WORKERS; ++i) {
+        std::cout << "Queue " << i << " pushed: " << push_counters[i].v.load() << ", processed: " << processed_counters[i].v.load() << "\n";
+    }
     std::cout << "All workers stopped cleanly.\n";
     return 0;
 }
