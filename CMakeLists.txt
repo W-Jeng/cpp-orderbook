@@ -8,6 +8,9 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/../vcpkg/scripts/buildsystems/vcpk
 add_library(orderbook_lib INTERFACE)
 target_include_directories(orderbook_lib INTERFACE include)
 
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
 enable_testing()
 
 add_subdirectory(src)

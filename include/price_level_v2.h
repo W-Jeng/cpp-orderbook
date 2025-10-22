@@ -9,6 +9,7 @@
 #include <string>
 #include <order.h>
 #include <core.h>
+#include <boost/unordered/unordered_flat_map.hpp>
 
 struct OrderEntry{
     bool is_valid;
@@ -33,6 +34,7 @@ public:
     {
         _order_entries.reserve(ORDER_ENTRY_RESERVE);
         _orders_map.reserve(ORDER_ENTRY_RESERVE);
+        boost::unordered_flat_map<int, std::string> id_to_name;
     }
 
     void add_order(Order* order) {

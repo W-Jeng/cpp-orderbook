@@ -8,3 +8,5 @@ add_executable(main_s
 
 target_include_directories(main PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(main_s PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+
