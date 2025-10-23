@@ -15,8 +15,11 @@
 
 struct alignas(CACHE_LINE_SIZE) OrderRoutingSystem {
     std::vector<std::vector<OrderBook>> worker_orderbooks;
+    char pad0[CACHE_LINE_SIZE];
     std::unordered_map<Instrument, size_t> instrument_to_worker;
+    char pad1[CACHE_LINE_SIZE];
     std::vector<SPSCQueue<OrderCommand>> queues;
+    char pad2[CACHE_LINE_SIZE];
 };
 
 OrderRoutingSystem build_order_routing_system(
