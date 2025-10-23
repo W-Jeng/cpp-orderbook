@@ -309,6 +309,7 @@ private:
     OrderId _next_available_order_id;
     uint64_t _trades_completed;
     bool _try_match_flag;
+    char pad[64];
 };
 
 inline std::string price_to_string(double p, int precision = 2) {

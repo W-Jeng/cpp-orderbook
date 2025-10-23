@@ -77,7 +77,7 @@ private:
     std::vector<T> _buffer;
     char pad0[64];
     std::atomic<size_t> _head;
-    char pad1[64 - sizeof(std::atomic<size_t>)];
+    char pad1[64];
     std::atomic<size_t> _tail;
-    char pad2[64 - sizeof(std::atomic<size_t>)];
+    char pad2[128];
 };
