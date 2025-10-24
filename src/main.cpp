@@ -13,6 +13,7 @@
 #include <order_routing_system.h>
 #include <pthread.h>
 #include <sched.h>
+#include <producer.h>
 
 std::atomic<bool> shutdown_requested{false};
 
@@ -54,13 +55,6 @@ int main() {
         QUEUE_CAP
     );
     
-    for (size_t i = 0; i < NUM_WORKERS; ++i) {
-        worker_threads.emplace_back([&, i]() mutable {
-            pin_to_core(i);
-            Worker worker(order_routing_sys.worker_contexts[i].get());
-            worker.run();
-        });
-    }
     
     std::signal(SIGINT, signal_handler);
     Producer producer(order_routing_sys);
@@ -73,14 +67,23 @@ int main() {
     }
     
     // wait for threads to start
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     // start the basic benchmark now
     using clock = std::chrono::high_resolution_clock;
-    auto start = clock::now();
 
     for (auto& order_cmd: order_commands) {
         producer.submit(std::move(order_cmd));   
+    }
+
+    auto start = clock::now();
+
+    for (size_t i = 0; i < NUM_WORKERS; ++i) {
+        worker_threads.emplace_back([&, i]() mutable {
+            pin_to_core(i);
+            Worker worker(order_routing_sys.worker_contexts[i].get());
+            worker.run();
+        });
     }
 
     auto prod_end = clock::now();

@@ -18,7 +18,6 @@
 
 class alignas(CACHE_LINE_SIZE) OrderBook {
 public:
-    inline static constexpr size_t ORDER_REGISTRY_RESERVE = 1'000'000;
     std::chrono::duration<double> elapsed;
     using clock = std::chrono::high_resolution_clock;
 
@@ -26,12 +25,12 @@ public:
         _instrument(instrument),
         _id_allocator(id_allocator),
         _order_id_block(id_allocator.get_next_id_block()),
-        _order_pool(OrderPool{ORDER_REGISTRY_RESERVE}),
+        _order_pool(OrderPool{SPACE_RESERVE}),
         _trades_completed(0),
         _try_match_flag(false)
     {
         _next_available_order_id = _order_id_block._start;
-        _order_registry.reserve(ORDER_REGISTRY_RESERVE*2);
+        _order_registry.reserve(SPACE_RESERVE*2);
     }
     
     // explicitly allow moving

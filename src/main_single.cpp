@@ -11,6 +11,7 @@
 #include <worker.h>
 #include <core.h>
 #include <order_routing_system.h>
+#include <producer.h>
 
 std::atomic<bool> shutdown_requested{false};
 

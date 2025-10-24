@@ -5,6 +5,7 @@
 #include <order.h>
 #include <spsc_queue.h>
 #include <unordered_map>
+#include <order_routing_system.h>
 #include <core.h>
 
 class alignas(CACHE_LINE_SIZE) Producer {
@@ -60,4 +61,5 @@ public:
     
 private:
     OrderRoutingSystem& _order_routing_system;
+    char pad[CACHE_LINE_SIZE];
 };

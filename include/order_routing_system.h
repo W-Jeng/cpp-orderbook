@@ -3,7 +3,6 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include <producer.h>
 #include <order.h>
 #include <spsc_queue.h>
 #include <id_allocator.h>
@@ -24,21 +23,11 @@ struct alignas(CACHE_LINE_SIZE) WorkerContext {
     }
 };
 
-// the key idea is to keep track of [worker_index1] -> {instrument1, instrument2,... }
-// then the router is to route to the right worker_index based on the instrument
-// finally the queue is shared by consumer and producer 
-// struct alignas(CACHE_LINE_SIZE) OrderRoutingSystem {
-//     std::vector<std::vector<OrderBook>> worker_orderbooks;
-//     char pad0[CACHE_LINE_SIZE];
-//     std::unordered_map<Instrument, size_t> instrument_to_worker;
-//     char pad1[CACHE_LINE_SIZE];
-//     std::vector<SPSCQueue<OrderCommand>> queues;
-//     char pad2[CACHE_LINE_SIZE];
-// };
-
 struct alignas(CACHE_LINE_SIZE) OrderRoutingSystem {
-    std::vector<std::unique_ptr<WorkerContext>> worker_contexts;
-    std::unordered_map<Instrument, size_t> instrument_router;
+    alignas(CACHE_LINE_SIZE) std::vector<std::unique_ptr<WorkerContext>> worker_contexts;
+    char pad0[CACHE_LINE_SIZE];
+    alignas(CACHE_LINE_SIZE) std::unordered_map<Instrument, size_t> instrument_router;
+    char pad1[CACHE_LINE_SIZE];
 };
 
 OrderRoutingSystem build_order_routing_system(

@@ -37,4 +37,5 @@ public:
 private:
     const OrderId _block_size;
     std::atomic<OrderId> _global_counter{FIRST_ORDER_ID};
+    char pad[64];
 };

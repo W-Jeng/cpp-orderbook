@@ -24,7 +24,6 @@ struct OrderEntry{
 class alignas(CACHE_LINE_SIZE) PriceLevel {
 public:
     using OrderEntries = std::vector<OrderEntry>;
-    static constexpr size_t ORDER_ENTRY_RESERVE = 1'048'576;
     std::chrono::duration<double> elapsed;
     using clock = std::chrono::high_resolution_clock;
 
@@ -32,8 +31,8 @@ public:
         _price(price),
         _queue_head_index(0)
     {
-        _order_entries.reserve(ORDER_ENTRY_RESERVE);
-        _orders_map.reserve(ORDER_ENTRY_RESERVE * 1.5);
+        _order_entries.reserve(SPACE_RESERVE);
+        _orders_map.reserve(SPACE_RESERVE * 1.5);
         // boost::unordered_flat_map<int, std::string> id_to_name;
     }
 
@@ -129,6 +128,7 @@ private:
     OrderEntries _order_entries;
     size_t _queue_head_index;
     boost::unordered_flat_map<OrderId, size_t> _orders_map;
+    char pad[CACHE_LINE_SIZE];
 };
 
 inline std::ostream& operator<<(std::ostream& os, const PriceLevel& price_level) {
