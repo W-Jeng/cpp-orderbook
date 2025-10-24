@@ -57,16 +57,13 @@ int main() {
     for (size_t i = 0; i < NUM_WORKERS; ++i) {
         worker_threads.emplace_back([&, i]() mutable {
             pin_to_core(i);
-            Worker worker(
-                &order_routing_sys.queues[i], 
-                std::move(order_routing_sys.worker_orderbooks[i])
-            );
+            Worker worker(order_routing_sys.worker_contexts[i].get());
             worker.run();
         });
     }
     
     std::signal(SIGINT, signal_handler);
-    Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
+    Producer producer(order_routing_sys);
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
     
@@ -88,33 +85,12 @@ int main() {
 
     auto prod_end = clock::now();
     std::chrono::duration<double> elapsed_prod_submit = prod_end - start;
-    std::cout << "Elapsed time (Producer submit): " << elapsed_prod_submit.count() << " seconds\n";
-    
-    // std::cout << "Shutdown noted. Stopping workers by sending a poison pill...\n";
-    std::unordered_set<int> shutdown_message_sent;
     
     auto start_submit_shutdown = clock::now();
-
-    while (shutdown_message_sent.size() != NUM_WORKERS) {
-        for (int i = 0; i < order_routing_sys.queues.size(); ++i) {
-            if (shutdown_message_sent.find(i) != shutdown_message_sent.end()) {
-                // we have sent the poison pill
-                continue;   
-            }
-
-            OrderCommand shutdown_cmd;
-            shutdown_cmd.type = OrderCommand::Type::SHUTDOWN;
-            auto& queue = order_routing_sys.queues[i];
-
-            if (queue.push(shutdown_cmd)) 
-                shutdown_message_sent.insert(i);
-        }
-        // std::this_thread::yield();
-    }
-
+    producer.submit_all_shutdown_commands();
     auto end_submit_shutdown = clock::now();
+
     std::chrono::duration<double> elapsed_submit_shutdown = end_submit_shutdown - start_submit_shutdown;
-    std::cout << "Elapsed time (submit shutdown): " << elapsed_submit_shutdown.count() << " seconds\n";
 
     for (auto& t: worker_threads) {
         if (t.joinable())
@@ -123,6 +99,8 @@ int main() {
 
     auto end = clock::now();
     std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Elapsed time (Producer submit): " << elapsed_prod_submit.count() << " seconds\n";
+    std::cout << "Elapsed time (submit shutdown): " << elapsed_submit_shutdown.count() << " seconds\n";
     std::cout << "Total Elapsed time: " << elapsed.count() << " seconds\n";
     std::cout << "All workers stopped cleanly.\n";
     return 0;

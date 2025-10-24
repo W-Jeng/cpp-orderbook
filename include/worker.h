@@ -1,18 +1,19 @@
 #pragma once
 
 #include <unordered_map>
-#include <spsc_queue.h>
 #include <vector>
+#include <spsc_queue.h>
 #include <order.h>
 #include <orderbook.h>
 #include <core.h>
+#include <order_routing_system.h>
 
 class alignas(CACHE_LINE_SIZE) Worker {
 public:
-    Worker(SPSCQueue<OrderCommand>* q, std::vector<OrderBook>&& books):
-        _queue(q)
+    Worker(WorkerContext* worker_context):
+        _queue(worker_context -> queue)
     {
-        for (auto& book: books) {
+        for (auto& book: worker_context -> orderbooks) {
             const Instrument instrument = book.get_instrument();
             _books.emplace(instrument, std::move(book));
         }

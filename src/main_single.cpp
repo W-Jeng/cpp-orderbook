@@ -45,7 +45,7 @@ int main() {
         QUEUE_CAP
     );
     
-    Producer producer(order_routing_sys.queues, order_routing_sys.instrument_to_worker);
+    Producer producer(order_routing_sys);
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
     
@@ -54,24 +54,19 @@ int main() {
         order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
     }
     
-    OrderCommand shutdown_cmd{OrderCommand::Type::SHUTDOWN, Order{"S0"}};
-    order_commands.push_back(shutdown_cmd);
-
-    // start the basic benchmark now
+    // submit and populate the queues first
     for (auto& order_cmd: order_commands) {
         producer.submit(std::move(order_cmd));   
     }
 
-    Worker worker(
-        &order_routing_sys.queues[0],
-        std::move(order_routing_sys.worker_orderbooks[0])    
-    );
-
+    producer.submit_all_shutdown_commands();
+    Worker worker(order_routing_sys.worker_contexts[0].get());
     using clock = std::chrono::high_resolution_clock;
+
     auto start = clock::now();
     worker.run();
-
     auto end = clock::now();
+
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Total Elapsed time: " << elapsed.count() << " seconds\n";
     std::cout << "All workers stopped cleanly.\n";
