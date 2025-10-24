@@ -15,4 +15,4 @@ constexpr OrderId DEFAULT_ORDER_ID = 0;
 constexpr OrderId FIRST_ORDER_ID = 1; 
 constexpr OrderId INVALID_ORDER_ID = UINT64_MAX; 
 
-constexpr std::size_t SPACE_RESERVE = 1'000'000;
+constexpr std::size_t SPACE_RESERVE = 250'000;
