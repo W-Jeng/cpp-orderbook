@@ -21,16 +21,17 @@ public:
     std::chrono::duration<double> elapsed;
     using clock = std::chrono::high_resolution_clock;
 
-    explicit OrderBook(const Instrument& instrument, IdAllocator& id_allocator): 
+    explicit OrderBook(const Instrument& instrument, IdAllocator& id_allocator, size_t space_reserve_per_instrument=SPACE_RESERVE): 
         _instrument(instrument),
         _id_allocator(id_allocator),
         _order_id_block(id_allocator.get_next_id_block()),
         _order_pool(OrderPool{SPACE_RESERVE}),
         _trades_completed(0),
-        _try_match_flag(false)
+        _try_match_flag(false),
+        _space_reserve_price_level(space_reserve_per_instrument)
     {
         _next_available_order_id = _order_id_block._start;
-        _order_registry.reserve(SPACE_RESERVE*2);
+        _order_registry.reserve(space_reserve_per_instrument*1.5);
     }
     
     // explicitly allow moving
@@ -76,7 +77,7 @@ public:
 
     template <typename MapType>
     void add_order_dispatcher(MapType& side_levels, Order* order) {
-        auto [it, inserted] = side_levels.try_emplace(order -> get_price(), order -> get_price());
+        auto [it, inserted] = side_levels.try_emplace(order -> get_price(), order -> get_price(), _space_reserve_price_level);
         _try_match_flag = inserted;
         PriceLevel& p_level = it -> second;
 
@@ -307,8 +308,8 @@ private:
     OrderIdBlock _order_id_block;
     OrderId _next_available_order_id;
     uint64_t _trades_completed;
+    size_t _space_reserve_price_level;
     bool _try_match_flag;
-    char pad[CACHE_LINE_SIZE];
 };
 
 inline std::string price_to_string(double p, int precision = 2) {

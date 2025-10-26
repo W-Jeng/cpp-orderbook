@@ -12,14 +12,16 @@
 struct alignas(CACHE_LINE_SIZE) WorkerContext {
     std::vector<OrderBook> orderbooks;
     SPSCQueue<OrderCommand> queue;
+    size_t reserve_space_per_instrument;
     
-    WorkerContext(std::vector<Instrument>& instruments, IdAllocator& id_allocator, const size_t queue_cap):
-        queue(queue_cap)
+    WorkerContext(std::vector<Instrument>& instruments, IdAllocator& id_allocator, const size_t queue_cap, const size_t r_space):
+        queue(queue_cap),
+        reserve_space_per_instrument(r_space)
     {
         orderbooks.reserve(instruments.size());
         
         for (auto& instrument: instruments)
-            orderbooks.push_back(OrderBook(instrument, id_allocator));
+            orderbooks.push_back(OrderBook(instrument, id_allocator, r_space));
     }
 };
 
@@ -34,12 +36,14 @@ OrderRoutingSystem build_order_routing_system(
     const std::vector<Instrument>& instruments,
     IdAllocator& id_allocator,
     const size_t num_workers,
-    const size_t queue_cap
+    const size_t queue_cap,
+    const size_t total_reserve_space
 ) {
     OrderRoutingSystem order_routing_sys;
     order_routing_sys.worker_contexts.reserve(num_workers);
     std::vector<std::vector<Instrument>> instrument_sets;
     instrument_sets.resize(num_workers);    
+    size_t reserve_space_per_instrument = total_reserve_space/instruments.size() + 1;
 
     for (size_t i = 0; i < instruments.size(); ++i) {
         size_t allocated_worker_idx = i % num_workers;
@@ -49,7 +53,7 @@ OrderRoutingSystem build_order_routing_system(
     }
     
     for (size_t w = 0; w < num_workers; ++w) {
-        std::unique_ptr<WorkerContext> worker_data = std::make_unique<WorkerContext>(instrument_sets[w], id_allocator, queue_cap);
+        std::unique_ptr<WorkerContext> worker_data = std::make_unique<WorkerContext>(instrument_sets[w], id_allocator, queue_cap, reserve_space_per_instrument);
         order_routing_sys.worker_contexts.push_back(std::move(worker_data));
     }
     

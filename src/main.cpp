@@ -7,7 +7,6 @@
 #include <order.h>
 #include <orderbook.h>
 #include <id_allocator.h>
-#include <book_map.h>
 #include <worker.h>
 #include <core.h>
 #include <order_routing_system.h>
@@ -32,9 +31,9 @@ void pin_to_core(int core_id) {
 }
 
 int main() {
-    const size_t NUM_ORDERS = 1'000'000;
-    const size_t NUM_WORKERS = 4;
-    const size_t NUM_INSTRUMENTS = 4;
+    const size_t NUM_ORDERS = 5'000'000;
+    const size_t NUM_WORKERS = 2;
+    const size_t NUM_INSTRUMENTS = 2;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 2; 
@@ -52,7 +51,8 @@ int main() {
         instruments,
         id_allocator,
         NUM_WORKERS,
-        QUEUE_CAP
+        QUEUE_CAP,
+        NUM_ORDERS
     );
     
     
@@ -87,7 +87,7 @@ int main() {
     }
 
     auto prod_end = clock::now();
-    std::chrono::duration<double> elapsed_prod_submit = prod_end - start;
+    std::chrono::duration<double> elapsed_thread_startup = prod_end - start;
     
     auto start_submit_shutdown = clock::now();
     producer.submit_all_shutdown_commands();
@@ -102,7 +102,7 @@ int main() {
 
     auto end = clock::now();
     std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Elapsed time (Producer submit): " << elapsed_prod_submit.count() << " seconds\n";
+    std::cout << "Elapsed time (Elapsed thread startup): " << elapsed_thread_startup.count() << " seconds\n";
     std::cout << "Elapsed time (submit shutdown): " << elapsed_submit_shutdown.count() << " seconds\n";
     std::cout << "Total Elapsed time: " << elapsed.count() << " seconds\n";
     std::cout << "All workers stopped cleanly.\n";

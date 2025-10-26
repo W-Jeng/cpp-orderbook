@@ -74,7 +74,6 @@ public:
     }
 
 private:
-    char pad0[64];
     std::vector<T> _buffer;
     char pad1[64];
     std::atomic<size_t> _head;

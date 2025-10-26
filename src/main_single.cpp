@@ -7,7 +7,6 @@
 #include <order.h>
 #include <orderbook.h>
 #include <id_allocator.h>
-#include <book_map.h>
 #include <worker.h>
 #include <core.h>
 #include <order_routing_system.h>
@@ -23,7 +22,7 @@ void signal_handler(int signal) {
 }
 
 int main() {
-    const size_t NUM_ORDERS = 1'000'000;
+    const size_t NUM_ORDERS = 5'000'000;
     const size_t NUM_WORKERS = 1;
     const size_t NUM_INSTRUMENTS = 1;
     
@@ -43,7 +42,8 @@ int main() {
         instruments,
         id_allocator,
         NUM_WORKERS,
-        QUEUE_CAP
+        QUEUE_CAP,
+        NUM_ORDERS
     );
     
     Producer producer(order_routing_sys);

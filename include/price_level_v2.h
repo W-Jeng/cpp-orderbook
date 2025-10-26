@@ -27,22 +27,18 @@ public:
     std::chrono::duration<double> elapsed;
     using clock = std::chrono::high_resolution_clock;
 
-    PriceLevel(Price price):
+    PriceLevel(Price price, size_t space_reserve = SPACE_RESERVE):
         _price(price),
         _queue_head_index(0)
     {
-        _order_entries.reserve(SPACE_RESERVE);
-        _orders_map.reserve(SPACE_RESERVE * 1.5);
-        // boost::unordered_flat_map<int, std::string> id_to_name;
+        _order_entries.reserve(space_reserve);
+        _orders_map.reserve(space_reserve * 1.5);
     }
 
     void add_order(Order* order) {
         const OrderId order_id = order -> get_id();
         _order_entries.push_back(OrderEntry(order));
-        // auto start = clock::now();
         _orders_map[order_id] = _order_entries.size()-1;
-        // auto end = clock::now();
-        // elapsed += end-start;
     }
 
     void print_time() {
@@ -128,7 +124,6 @@ private:
     OrderEntries _order_entries;
     size_t _queue_head_index;
     boost::unordered_flat_map<OrderId, size_t> _orders_map;
-    char pad[CACHE_LINE_SIZE];
 };
 
 inline std::ostream& operator<<(std::ostream& os, const PriceLevel& price_level) {

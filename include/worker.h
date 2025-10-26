@@ -15,16 +15,14 @@ public:
     {
         for (auto& book: worker_context -> orderbooks) {
             const Instrument instrument = book.get_instrument();
-            _books.emplace(instrument, std::move(book));
+            _books.try_emplace(instrument, std::move(book));
         }
     }
     
     void run() {
         OrderCommand cmd{};
-        int count = 0;
         using clock = std::chrono::high_resolution_clock;
         std::chrono::duration<double> elapsed;
-        int backoff = 0;
         
         while (true) {
             if (_queue -> pop(cmd)) {
@@ -32,21 +30,10 @@ public:
                 if (cmd.type == OrderCommand::Type::SHUTDOWN)
                     break;
                 
-                backoff = 0;
-                ++count;
                 // currently, we only hand those that are successful
-                // auto start = clock::now();
                 process_command(cmd);
-                // auto end = clock::now();
-                // elapsed += (end-start);
             } 
         }
-        // std::cout << "Total elapsed time in worker: " <<  elapsed.count() << " seconds, count: " << count << "\n";
-
-        // for (auto& [instrument, ob]: _books) {
-        //     std::cout << "Instrument: " << instrument << ", ";
-        //     ob.print_time();
-        // }
     }
     
     bool process_command(OrderCommand& cmd) {
