@@ -35,9 +35,9 @@ public:
         _quantity_filled(0),
         _status(OrderStatus::NEW)
     {
-        // TimePoint now = std::chrono::system_clock::now();
-        // _time_submitted = now;
-        // _updated_time = now; 
+        TimePoint now = std::chrono::system_clock::now();
+        _time_submitted = now;
+        _updated_time = now; 
     }
     
     Order(Instrument instrument):
@@ -49,9 +49,9 @@ public:
         _quantity_filled(0),
         _status(OrderStatus::NEW)
     {
-        // TimePoint now = std::chrono::system_clock::now();
-        // _time_submitted = now;
-        // _updated_time = now; 
+        TimePoint now = std::chrono::system_clock::now();
+        _time_submitted = now;
+        _updated_time = now; 
     }
 
     // information received from client
@@ -64,9 +64,9 @@ public:
         _quantity_filled(0),
         _status(OrderStatus::NEW)
     {
-        // TimePoint now = std::chrono::system_clock::now();
-        // _time_submitted = now;
-        // _updated_time = now; 
+        TimePoint now = std::chrono::system_clock::now();
+        _time_submitted = now;
+        _updated_time = now; 
     }
     
     // information constructed for Orderbook itself
@@ -77,12 +77,10 @@ public:
         _quantity(client_order._quantity),
         _id(allocated_id),
         _quantity_filled(0),
-        _status(OrderStatus::NEW)
-    {
-        // TimePoint now = std::chrono::system_clock::now();
-        // _time_submitted = now;
-        // _updated_time = now; 
-    }
+        _status(OrderStatus::NEW),
+        _time_submitted(client_order._time_submitted),
+        _updated_time(client_order._updated_time)
+    {}
 
     void copy_from_client(Order&& client_order, OrderId allocated_id) {
         _instrument = std::move(client_order._instrument);
@@ -97,7 +95,7 @@ public:
             throw std::runtime_error("Unable to carry add fill quantity due to it exceeds the order quantity amount");
         
         _quantity_filled += fill_qty;
-        // _updated_time = std::chrono::system_clock::now();
+        _updated_time = std::chrono::system_clock::now();
         
         if (_quantity_filled == _quantity) {
             _status = OrderStatus::FULLY_FILLED;  
@@ -111,7 +109,7 @@ public:
         if (_status == OrderStatus::FULLY_FILLED || _status == OrderStatus::CANCELLED) 
             return false;   
         
-        // _updated_time = std::chrono::system_clock::now();
+        _updated_time = std::chrono::system_clock::now();
         _status = OrderStatus::CANCELLED;
         return true;
     }
@@ -121,7 +119,7 @@ public:
     }
     
     void set_price(Price new_price) {
-        // _updated_time = std::chrono::system_clock::now();
+        _updated_time = std::chrono::system_clock::now();
         _price = new_price;
     }
     
@@ -153,13 +151,13 @@ public:
         return _side;   
     }
 
-    // TimePoint get_time_submitted() const {
-    //     return _time_submitted;   
-    // }
+    TimePoint get_time_submitted() const {
+        return _time_submitted;   
+    }
 
-    // TimePoint get_updated_time() const {
-    //     return _time_submitted;   
-    // }
+    TimePoint get_updated_time() const {
+        return _time_submitted;   
+    }
 
 private:
     Instrument _instrument;
@@ -169,8 +167,8 @@ private:
     OrderId _id;
     Quantity _quantity_filled;
     OrderStatus _status;
-    // TimePoint _time_submitted;
-    // TimePoint _updated_time;
+    TimePoint _time_submitted;
+    TimePoint _updated_time;
 };
 
 struct OrderCommand {
@@ -197,11 +195,11 @@ struct OrderCommand {
 
 inline std::ostream& operator<<(std::ostream& os, const Order& order) {
     const char* side_str = (order.get_side() == OrderSide::BUY ? "BUY" : "SELL");
-    // std::time_t updated_time_t = std::chrono::system_clock::to_time_t(order.get_updated_time());
+    std::time_t updated_time_t = std::chrono::system_clock::to_time_t(order.get_updated_time());
+
     return os << "Order(instrument=" << order.get_instrument() << ", id=" << order.get_id() << 
         ", side=" << side_str << ", price=" << order.get_price() << ", quantity=" << order.get_quantity() << 
-        ")";
-        // ", updated_time=" << updated_time_t << ")";
+        ", updated_time=" << updated_time_t << ")";
 }
 
 inline std::ostream& operator<<(std::ostream& os, const OrderCommand& order_cmd) {

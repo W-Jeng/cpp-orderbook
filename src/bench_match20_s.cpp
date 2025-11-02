@@ -22,7 +22,7 @@ void signal_handler(int signal) {
 }
 
 int main() {
-    const size_t NUM_ORDERS = 5'000'000;
+    const size_t NUM_ORDERS = 20;
     const size_t NUM_WORKERS = 1;
     const size_t NUM_INSTRUMENTS = 1;
     
@@ -50,9 +50,17 @@ int main() {
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
     
+    // we want trade match of around 20% of the orders sent
     for (int i = 0; i < NUM_ORDERS; ++i) {
-        Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, 100.01, 200};
-        order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        if (i % 2 == 0) {
+            double price = static_cast<double>((i/2 % 5) + 6);
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, price, 200};
+            order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        } else {
+            double price = static_cast<double>(((i-1)/2 % 5) + 10);
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, price, 200};
+            order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        }
     }
     
     // submit and populate the queues first

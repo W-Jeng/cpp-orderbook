@@ -240,6 +240,7 @@ public:
             PriceLevel& best_ask_price_level = ask_it -> second;
             Order* bid_order = best_bid_price_level.front();
             Order* ask_order = best_ask_price_level.front();
+            std::cout << "bid order id: " << bid_order -> get_id() << ", ask order id: " << ask_order->get_id() << std::endl;
             match_orders(bid_order, ask_order);
             best_bid_price_level.pop_front_order_if_filled();
             best_ask_price_level.pop_front_order_if_filled();
