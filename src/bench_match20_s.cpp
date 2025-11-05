@@ -22,7 +22,8 @@ void signal_handler(int signal) {
 }
 
 int main() {
-    const size_t NUM_ORDERS = 20;
+    using clock = std::chrono::high_resolution_clock;
+    const size_t NUM_ORDERS = 500'000;
     const size_t NUM_WORKERS = 1;
     const size_t NUM_INSTRUMENTS = 1;
     
@@ -50,15 +51,16 @@ int main() {
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
     
+    auto start_add_commands = clock::now();
     // we want trade match of around 20% of the orders sent
     for (int i = 0; i < NUM_ORDERS; ++i) {
         if (i % 2 == 0) {
             double price = static_cast<double>((i/2 % 5) + 6);
-            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, price, 200};
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, price, 1000};
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         } else {
             double price = static_cast<double>(((i-1)/2 % 5) + 10);
-            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, price, 200};
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, price, 1000};
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         }
     }
@@ -70,8 +72,10 @@ int main() {
 
     producer.submit_all_shutdown_commands();
     Worker worker(order_routing_sys.worker_contexts[0].get());
-    using clock = std::chrono::high_resolution_clock;
 
+    auto end_add_commands = clock::now();
+    std::chrono::duration<double> elapsed_add_commands = end_add_commands - start_add_commands;
+    std::cout << "Elapsed seconds Add comamnds: " << elapsed_add_commands.count() << " seconds\n";
     auto start = clock::now();
     worker.run();
     auto end = clock::now();

@@ -20,6 +20,7 @@ class alignas(CACHE_LINE_SIZE) OrderBook {
 public:
     std::chrono::duration<double> elapsed;
     using clock = std::chrono::high_resolution_clock;
+    size_t removal_num = 0;
 
     explicit OrderBook(const Instrument& instrument, IdAllocator& id_allocator, size_t space_reserve_per_instrument=SPACE_RESERVE): 
         _instrument(instrument),
@@ -77,14 +78,11 @@ public:
 
     template <typename MapType>
     void add_order_dispatcher(MapType& side_levels, Order* order) {
-        auto [it, inserted] = side_levels.try_emplace(order -> get_price(), order -> get_price(), _space_reserve_price_level);
+        auto [it, inserted] = side_levels.try_emplace(order -> get_price(), order -> get_price(), 128);
         _try_match_flag = inserted;
         PriceLevel& p_level = it -> second;
 
-        // auto start = clock::now();
         p_level.add_order(order);
-        // auto end = clock::now();
-        // elapsed += end-start;
         _order_registry[order -> get_id()] = order;
     }
 
@@ -240,7 +238,6 @@ public:
             PriceLevel& best_ask_price_level = ask_it -> second;
             Order* bid_order = best_bid_price_level.front();
             Order* ask_order = best_ask_price_level.front();
-            std::cout << "bid order id: " << bid_order -> get_id() << ", ask order id: " << ask_order->get_id() << std::endl;
             match_orders(bid_order, ask_order);
             best_bid_price_level.pop_front_order_if_filled();
             best_ask_price_level.pop_front_order_if_filled();

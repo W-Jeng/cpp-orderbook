@@ -27,7 +27,7 @@ public:
     std::chrono::duration<double> elapsed;
     using clock = std::chrono::high_resolution_clock;
 
-    PriceLevel(Price price, size_t space_reserve = SPACE_RESERVE):
+    PriceLevel(Price price, size_t space_reserve = 128):
         _price(price),
         _queue_head_index(0)
     {
