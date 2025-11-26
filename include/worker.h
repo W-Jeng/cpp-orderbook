@@ -34,10 +34,6 @@ public:
                 process_command(cmd);
             } 
         }
-
-        for (const auto& [instrument, ob]: _books) {
-            std::cout << "time to remove: " << ob.elapsed.count() << "\n";
-        }
     }
     
     bool process_command(OrderCommand& cmd) {

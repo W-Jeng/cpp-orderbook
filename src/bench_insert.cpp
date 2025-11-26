@@ -62,8 +62,14 @@ int main() {
     order_commands.reserve(QUEUE_CAP);
     
     for (int i = 0; i < NUM_ORDERS; ++i) {
-        Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, 100.01, 200};
-        order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        double price_offset = static_cast<double>(i % 5)/100.0;
+        if (i % 2 == 0) {
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, 99.99-price_offset, 200};
+            order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        } else {
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, 100.01-price_offset, 200};
+            order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        }
     }
     
     // wait for threads to start

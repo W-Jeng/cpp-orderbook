@@ -23,7 +23,7 @@ void signal_handler(int signal) {
 
 int main() {
     using clock = std::chrono::high_resolution_clock;
-    const size_t NUM_ORDERS = 500'000;
+    const size_t NUM_ORDERS = 1'000'000;
     const size_t NUM_WORKERS = 1;
     const size_t NUM_INSTRUMENTS = 1;
     

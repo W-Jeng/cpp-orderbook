@@ -24,7 +24,7 @@ void signal_handler(int signal) {
 int main() {
     const size_t NUM_ORDERS = 1'000'000;
     const size_t NUM_WORKERS = 1;
-    const size_t NUM_INSTRUMENTS = 1;
+    const size_t NUM_INSTRUMENTS = 4;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 2; 
@@ -51,8 +51,14 @@ int main() {
     order_commands.reserve(QUEUE_CAP);
     
     for (int i = 0; i < NUM_ORDERS; ++i) {
-        Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, 100.01, 200};
-        order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        double price_offset = static_cast<double>(i % 5)/100.0;
+        if (i % 2 == 0) {
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, 99.99-price_offset, 200};
+            order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        } else {
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, 100.01-price_offset, 200};
+            order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
+        }
     }
     
     // submit and populate the queues first
