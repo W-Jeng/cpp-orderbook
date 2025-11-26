@@ -10,6 +10,8 @@
 #include <worker.h>
 #include <core.h>
 #include <order_routing_system.h>
+#include <pthread.h>
+#include <sched.h>
 #include <producer.h>
 
 std::atomic<bool> shutdown_requested{false};
@@ -21,10 +23,16 @@ void signal_handler(int signal) {
     }
 }
 
+void pin_to_core(int core_id) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(core_id, &cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+}
+
 int main() {
-    using clock = std::chrono::high_resolution_clock;
     const size_t NUM_ORDERS = 1'000'000;
-    const size_t NUM_WORKERS = 1;
+    const size_t NUM_WORKERS = 4;
     const size_t NUM_INSTRUMENTS = 4;
     
     // ensure that the consumer loads all orders
@@ -47,12 +55,11 @@ int main() {
         NUM_ORDERS
     );
     
+    std::signal(SIGINT, signal_handler);
     Producer producer(order_routing_sys);
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
     
-    auto start_add_commands = clock::now();
-    // we want trade match of around 20% of the orders sent
     for (int i = 0; i < NUM_ORDERS; ++i) {
         if (i % 2 == 0) {
             double price = static_cast<double>((i/2 % 5) + 6);
@@ -65,22 +72,44 @@ int main() {
         }
     }
     
-    // submit and populate the queues first
+    // wait for threads to start
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    // start the basic benchmark now
+    using clock = std::chrono::high_resolution_clock;
+
     for (auto& order_cmd: order_commands) {
         producer.submit(std::move(order_cmd));   
     }
 
-    producer.submit_all_shutdown_commands();
-    Worker worker(order_routing_sys.worker_contexts[0].get());
-
-    auto end_add_commands = clock::now();
-    std::chrono::duration<double> elapsed_add_commands = end_add_commands - start_add_commands;
-    std::cout << "Elapsed seconds Add commands: " << elapsed_add_commands.count() << " seconds\n";
     auto start = clock::now();
-    worker.run();
-    auto end = clock::now();
 
+    for (size_t i = 0; i < NUM_WORKERS; ++i) {
+        worker_threads.emplace_back([&, i]() mutable {
+            pin_to_core(i);
+            Worker worker(order_routing_sys.worker_contexts[i].get());
+            worker.run();
+        });
+    }
+
+    auto prod_end = clock::now();
+    std::chrono::duration<double> elapsed_thread_startup = prod_end - start;
+    
+    auto start_submit_shutdown = clock::now();
+    producer.submit_all_shutdown_commands();
+    auto end_submit_shutdown = clock::now();
+
+    std::chrono::duration<double> elapsed_submit_shutdown = end_submit_shutdown - start_submit_shutdown;
+
+    for (auto& t: worker_threads) {
+        if (t.joinable())
+            t.join();
+    }
+
+    auto end = clock::now();
     std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Elapsed time (Elapsed thread startup): " << elapsed_thread_startup.count() << " seconds\n";
+    std::cout << "Elapsed time (submit shutdown): " << elapsed_submit_shutdown.count() << " seconds\n";
     std::cout << "Total Elapsed time: " << elapsed.count() << " seconds\n";
     std::cout << "All workers stopped cleanly.\n";
     return 0;

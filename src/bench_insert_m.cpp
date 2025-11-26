@@ -55,7 +55,6 @@ int main() {
         NUM_ORDERS
     );
     
-    
     std::signal(SIGINT, signal_handler);
     Producer producer(order_routing_sys);
     std::vector<OrderCommand> order_commands;

@@ -20,7 +20,6 @@ class alignas(CACHE_LINE_SIZE) OrderBook {
 public:
     std::chrono::duration<double> elapsed;
     using clock = std::chrono::high_resolution_clock;
-    size_t removal_num = 0;
 
     explicit OrderBook(const Instrument& instrument, IdAllocator& id_allocator, size_t space_reserve_per_instrument=SPACE_RESERVE): 
         _instrument(instrument),

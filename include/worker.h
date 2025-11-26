@@ -34,6 +34,11 @@ public:
                 process_command(cmd);
             } 
         }
+
+        for (auto& [instrument, ob]: _books) {
+            std::cout << "Instrument: " << instrument << ", trades done: " <<
+                ob.get_trades_completed() << "\n";
+        }
     }
     
     bool process_command(OrderCommand& cmd) {
