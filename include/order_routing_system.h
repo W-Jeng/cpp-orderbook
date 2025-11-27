@@ -53,7 +53,12 @@ OrderRoutingSystem build_order_routing_system(
     }
     
     for (size_t w = 0; w < num_workers; ++w) {
-        std::unique_ptr<WorkerContext> worker_data = std::make_unique<WorkerContext>(instrument_sets[w], id_allocator, queue_cap, reserve_space_per_instrument);
+        std::unique_ptr<WorkerContext> worker_data = std::make_unique<WorkerContext>(
+            instrument_sets[w], 
+            id_allocator, 
+            queue_cap, 
+            reserve_space_per_instrument
+        );
         order_routing_sys.worker_contexts.push_back(std::move(worker_data));
     }
     

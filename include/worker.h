@@ -37,7 +37,9 @@ public:
 
         for (auto& [instrument, ob]: _books) {
             std::cout << "Instrument: " << instrument << ", trades done: " <<
-                ob.get_trades_completed() << "\n";
+                ob.get_trades_completed() << ", total orders in ob: (" << 
+                ob.get_total_bid_orders() << ", " << ob.get_total_ask_orders() <<
+                ")\n";
         }
     }
     

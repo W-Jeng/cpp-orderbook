@@ -31,7 +31,7 @@ public:
         _space_reserve_price_level(space_reserve_per_instrument)
     {
         _next_available_order_id = _order_id_block._start;
-        _order_registry.reserve(space_reserve_per_instrument*1.5);
+        _order_registry.reserve(space_reserve_per_instrument);
     }
     
     // explicitly allow moving
@@ -281,6 +281,22 @@ public:
 
     uint64_t get_trades_completed() const {
         return _trades_completed;
+    }
+
+    size_t get_total_bid_orders() const {
+        size_t res = 0;
+        for (const auto& [price, price_level]: get_bids()) {
+            res += price_level.size();
+        }
+        return res;
+    }
+
+    size_t get_total_ask_orders() const {
+        size_t res = 0;
+        for (const auto& [price, price_level]: get_asks()) {
+            res += price_level.size();
+        }
+        return res;
     }
 
     const std::map<Price, PriceLevel, std::greater<double>>& get_bids() const {

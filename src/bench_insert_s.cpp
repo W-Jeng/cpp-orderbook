@@ -24,13 +24,11 @@ void signal_handler(int signal) {
 int main() {
     const size_t NUM_ORDERS = 1'000'000;
     const size_t NUM_WORKERS = 1;
-    const size_t NUM_INSTRUMENTS = 4;
+    const size_t NUM_INSTRUMENTS = 5;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 2; 
 
-    std::vector<std::thread> worker_threads;
-    worker_threads.reserve(NUM_WORKERS);
     std::vector<Instrument> instruments;
     
     for (size_t i = 0; i < NUM_INSTRUMENTS; ++i) {
@@ -56,7 +54,7 @@ int main() {
             Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, 99.99-price_offset, 200};
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         } else {
-            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, 100.01-price_offset, 200};
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, 100.01+price_offset, 200};
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         }
     }
