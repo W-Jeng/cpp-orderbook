@@ -32,8 +32,8 @@ void pin_to_core(int core_id) {
 
 int main() {
     const size_t NUM_ORDERS = 1'000'000;
-    const size_t NUM_WORKERS = 4;
-    const size_t NUM_INSTRUMENTS = 4;
+    const size_t NUM_WORKERS = 5;
+    const size_t NUM_INSTRUMENTS = 5;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 2; 
@@ -59,15 +59,27 @@ int main() {
     Producer producer(order_routing_sys);
     std::vector<OrderCommand> order_commands;
     order_commands.reserve(QUEUE_CAP);
-    
+    int instrument_idx = 0;
+
+    // we want trade match of around 20% of the orders sent
     for (int i = 0; i < NUM_ORDERS; ++i) {
-        if (i % 2 == 0) {
-            double price = static_cast<double>((i/2 % 5) + 6);
-            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, price, 1000};
+        int j = i % 10;
+
+        if (j == 0) 
+            ++instrument_idx;
+        
+        if (instrument_idx == NUM_INSTRUMENTS) 
+            instrument_idx = 0;
+
+        if (j < 5) {
+            double price = 6.0 + j; 
+            // std::cout << "BUY i: " << i << ", j: " << j << ", price: " << price << std::endl;;
+            Order order{instruments[instrument_idx], OrderSide::BUY, price, 1000};
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         } else {
-            double price = static_cast<double>(((i-1)/2 % 5) + 10);
-            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, price, 1000};
+            double price = 5.0 + j;
+            // std::cout << "SELL i: " << i << ", j: " << j << ", price: " << price << std::endl;
+            Order order{instruments[instrument_idx], OrderSide::SELL, price, 1000};
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         }
     }

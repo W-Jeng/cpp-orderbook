@@ -66,7 +66,7 @@ int main() {
             Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::BUY, 99.99-price_offset, 200};
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         } else {
-            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, 100.01-price_offset, 200};
+            Order order{instruments[i % NUM_INSTRUMENTS], OrderSide::SELL, 100.01+price_offset, 200};
             order_commands.push_back(OrderCommand(OrderCommand::Type::ADD, order));
         }
     }
