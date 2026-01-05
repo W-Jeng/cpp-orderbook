@@ -31,9 +31,9 @@ void pin_to_core(int core_id) {
 }
 
 int main() {
-    const size_t NUM_ORDERS = 1'000'000;
+    const size_t NUM_ORDERS = 500'000;
     const size_t NUM_WORKERS = 5;
-    const size_t NUM_INSTRUMENTS = 5;
+    const size_t NUM_INSTRUMENTS = 10;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 2; 
@@ -71,6 +71,7 @@ int main() {
         }
     }
     
+    std::cout << "OrderCommand size: " << sizeof(OrderCommand) << " bytes\n";
     // wait for threads to start
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 

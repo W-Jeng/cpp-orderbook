@@ -7,6 +7,7 @@
 #include <spsc_queue.h>
 #include <id_allocator.h>
 #include <core.h>
+#include <boost/unordered/unordered_flat_map.hpp>
 
 // i think false sharing is happening between threads
 struct alignas(CACHE_LINE_SIZE) WorkerContext {
@@ -28,7 +29,7 @@ struct alignas(CACHE_LINE_SIZE) WorkerContext {
 struct alignas(CACHE_LINE_SIZE) OrderRoutingSystem {
     alignas(CACHE_LINE_SIZE) std::vector<std::unique_ptr<WorkerContext>> worker_contexts;
     char pad0[CACHE_LINE_SIZE];
-    alignas(CACHE_LINE_SIZE) std::unordered_map<Instrument, size_t> instrument_router;
+    alignas(CACHE_LINE_SIZE) boost::unordered_flat_map<Instrument, size_t> instrument_router;
     char pad1[CACHE_LINE_SIZE];
 };
 

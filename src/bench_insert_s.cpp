@@ -22,9 +22,9 @@ void signal_handler(int signal) {
 }
 
 int main() {
-    const size_t NUM_ORDERS = 1'000'000;
+    const size_t NUM_ORDERS = 500'000;
     const size_t NUM_WORKERS = 1;
-    const size_t NUM_INSTRUMENTS = 5;
+    const size_t NUM_INSTRUMENTS = 10;
     
     // ensure that the consumer loads all orders
     const size_t QUEUE_CAP = NUM_ORDERS + 2; 

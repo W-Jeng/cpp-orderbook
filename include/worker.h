@@ -44,11 +44,12 @@ public:
     }
     
     bool process_command(OrderCommand& cmd) {
+        // change this to consistent hashing
         auto it = _books.find(cmd.order.get_instrument());
         
         if (it == _books.end()) 
             return false;   
-        
+
         auto& book = it -> second;
         
         switch (cmd.type) {

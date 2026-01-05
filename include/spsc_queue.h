@@ -12,7 +12,7 @@ public:
     explicit SPSCQueue(size_t capacity):
         _buffer(capacity),
         _head(0),
-        _tail(0) 
+        _tail(0)
     {}
     
     // Disable copying (since atomics can’t be copied safely)
